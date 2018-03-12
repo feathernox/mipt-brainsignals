@@ -5,6 +5,7 @@
 \newcommand{\bx}{\mathbf{x}}
 \newcommand{\by}{\mathbf{y}}
 \newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
 \newcommand{\bY}{\mathbf{Y}}
 \newcommand{\bX}{\mathbf{X}}
 \newcommand{\bTheta}{\boldsymbol{\Theta}}
@@ -48,8 +49,7 @@
 	Вычислительный эксперимент проводится на реальных данных ECoG.
 	
 	\bigskip
-	\textbf{Ключевые слова}: \emph {ключевое слово, ключевое слово,
-		еще ключевые слова}.}
+	\textbf{Ключевые слова}: \emph {декодирование временных рядов, PLS, QPFS}.}
 
 \maketitle
 \linenumbers
@@ -61,10 +61,10 @@
 
 Признаковое описание многомерного временного ряда существует в пространствах независимых и зависимых переменных. Для учета существующих закономерностей в исходном и выходном пространстве используется скрытое пространство латентных переменных.  В скрытом пространстве происходит согласование между образами исходных пространств.
 
-В эксперименте рассматриваются следующие модели: метод частных наименьших квадратов (PLS), отбор признаков с помощью квадратичного программирования (QPFS), метод Белсли (Belsley) и вариации этих методов.
+В эксперименте рассматриваются следующие модели: метод частных наименьших квадратов (PLS) \cite{Isachenko17PLS}, отбор признаков с помощью квадратичного программирования (QPFS), метод Белсли (Belsley) и вариации этих методов.
 % Нелинейные модели -- нейросети.
 
-Описание метода PLS...
+PLS является методом отбора признаков
 
 Описание метода QPFS...
 
@@ -89,27 +89,31 @@ $\by \in \RR^r$ по $\bx \in \RR^n$.
 
 За $\bff(\bX, \btheta)$ обозначена матрица $\left[\bff(\bx_1, \btheta), \bff(\bx_2, \btheta), \hdots, \bff(\bx_m, \btheta)\right]\T$. Рассматривается квадратичная функция ошибки:
 \begin{equation}
-	\btheta^* = \arg \min_{\btheta \in \Theta} {\bigl\| \bff(\bX, \btheta) - \bY \bigr\| }_2^2, 
+	{\bigl\| \bff(\bX, \btheta) - \bY \bigr\| }_2^2 
+	\rightarrow \min_{\btheta \in \Theta} 
 	\label{eq::error_linear}
 \end{equation}
+Если пространство признаков имеет высокую размерность, вероятно, что матрица $\bX$ близка к вырожденной, а потому решение проблемы оптимизации \eqref{eq::error_linear} будет нестабильным. Поэтому для решения указанной задачи применяются методы отбора признаков, такие как PLS и QPFS.
 
-
-
-\paragraph{PLS}
-Метод частных наименьших квадратов 
+\paragraph{PLS.  \cite{Isachenko17PLS}}
+Метод частных наименьших квадратов PLS рассматривает в качестве признаков линейные комбинации исходных. Предполагается, что существует скрытое пространство латентных переменных малой размерности $l$ ($l < n, r$). Происходит поиск матрицы $\bT \in \RR^{m \times l}$, которая наилучшим образом описывает матрицы $\bX$ и $\bY$. 
 
 \begin{align}
 	\underset{m \times n}{\bX} &= \underset{m \times l}{\bT\T} \cdot
 	\underset{l \times n}{\bP\T} + \underset{m \times n}{\bE}
 	\label{eq::PLS_X} \\
 	\underset{m \times r}{\bY} &= \underset{m \times l}{\bU\T} \cdot
+	% \underset{l \times l}{\textrm{diag}(\bbeta)}\cdot
 	\underset{l \times r}{\bQ\T} + \underset{m \times r}{\bF}
 	\label{eq::PLS_Y}
 \end{align}
-\paragraph{QPFS}
+
+$\bT$ ---
+
+\paragraph{QPFS} Сформулируем задачу отбора признаков.  
 
 \begin{thebibliography}{1}
-\bibitem{author09anyscience}
+\bibitem{bci}
     \BibAuthor{
     	J. del R.\; Mill?n,
     	F. \; Renken,
@@ -117,6 +121,14 @@ $\by \in \RR^r$ по $\bx \in \RR^n$.
     	W. \; Gerstner}
     \BibTitle{Brain-actuated interaction}~//
     \BibJournal{Artif. Intell.}, 159(2004) 241–259.
+\bibitem{Isachenko17PLS}
+    \BibAuthor{
+    	Isachenko \; R,
+    	Vladimirova \; M.,
+    	Strijov. \; V.}
+    \BibTitle{Dimensionality reduction for time series decoding and
+    	forecasting problems}~//
+    \BibJournal{Machine Learning and Data Analysis}.
 
 \end{thebibliography}
 
