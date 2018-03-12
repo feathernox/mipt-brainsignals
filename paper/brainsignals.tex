@@ -1,0 +1,127 @@
+\documentclass[12pt,twoside]{article}
+\usepackage{jmlda}
+
+\newcommand{\bff}{\mathbf{f}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bY}{\mathbf{Y}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bTheta}{\boldsymbol{\Theta}}
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\bu}{\mathbf{u}}
+\newcommand{\bt}{\mathbf{t}}
+\newcommand{\bp}{\mathbf{p}}
+\newcommand{\bq}{\mathbf{q}}
+\newcommand{\bc}{\mathbf{c}}
+\newcommand{\bP}{\mathbf{P}}
+\newcommand{\bT}{\mathbf{T}}
+\newcommand{\bQ}{\mathbf{Q}}
+\newcommand{\bC}{\mathbf{C}}
+\newcommand{\bE}{\mathbf{E}}
+\newcommand{\bF}{\mathbf{F}}
+\newcommand{\bU}{\mathbf{U}}
+\newcommand{\bW}{\mathbf{W}}
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\T}{^{\text{\tiny\sffamily\upshape\mdseries T}}}
+
+\begin{document}
+%\NOREVIEWERNOTES
+\title
+    {Прогнозирование намерений по cигналам мозга ECoG}
+\author
+    {Калиниченко~О.\,И., Ремизова~А.\,С.} % основной список авторов, выводимый в оглавление
+\thanks
+{	Научный руководитель:  Стрижов~В.\,В. 
+	Задачу поставил:  Стрижов~В.\,В.
+	Консультант:  Исаченко~Р.\,В.}
+% \email{author@site.ru}
+\organization
+{$^1$ Московский физико-технический институт}
+\abstract
+{Работа посвящена построению системы тестирования прогностических моделей.
+	Рассматривается случай коррелированных входных сигналов высокой размерности.
+	В качестве прикладной задачи рассматривается задача предсказания намерений по сигналам головного мозга.
+	Входные данные -- сигналы электрокортикограммы (ECoG).
+	Для выявления и устранения скрытых зависимостей используются методы снижения размерности пространства и отбора признаков.
+	Предложенная система тестирования оценивает качество прогноза моделей и проводит анализ ошибки.
+	Вычислительный эксперимент проводится на реальных данных ECoG.
+	
+	\bigskip
+	\textbf{Ключевые слова}: \emph {ключевое слово, ключевое слово,
+		еще ключевые слова}.}
+
+\maketitle
+\linenumbers
+\section{Введение}
+Работа посвящена исследованию методов моделирования нейросетевого интерфейса (BCI).
+Входные данные -- сигналы мозга, полученные с помощью электрокортикографии (ECoG) и электроэнцефалографии (EEG). ECoG-сигналы имеют лучшее разрешение и большую амплитуду, однако для их получения требуется непосредственное подсоединение электродов к коре головного мозга. Одной из задач при построении систем BCI является предсказание намерений.
+
+Предлагается декодировать исходные сигналы и спрогнозировать траекторию движения верхних конечностей. Исходное пространство имеет избыточно высокую размерность. Линейная зависимость между признаками приводит к мультиколлинеарности. Для устранения мультиколлинеарности предлагается применить методы понижения размерности и отбора признаков.
+
+Признаковое описание многомерного временного ряда существует в пространствах независимых и зависимых переменных. Для учета существующих закономерностей в исходном и выходном пространстве используется скрытое пространство латентных переменных.  В скрытом пространстве происходит согласование между образами исходных пространств.
+
+В эксперименте рассматриваются следующие модели: метод частных наименьших квадратов (PLS), отбор признаков с помощью квадратичного программирования (QPFS), метод Белсли (Belsley) и вариации этих методов.
+% Нелинейные модели -- нейросети.
+
+Описание метода PLS...
+
+Описание метода QPFS...
+
+Предлагается система тестирования прогностических моделей с оценкой качества и анализом ошибки. Подобный инструмент может применяться не только в задаче анализа сигналов мозга, но и во многих других задачах, связанных с прогнозированием многомерных временных рядов.
+
+\section{Постановка задачи}
+% Постановка задачи предсказания
+Задана выборка $\mathfrak{D}= \left( \bX, \bY \right)$, где $\bX \in \RR^{m \times n}$ --- матрица объектов, $\bY \in \RR^{m \times r}$ --- матрица ответов. Имеется некоторая модель $\bff$ с набором параметров $\btheta$ из пространства $\Theta$, предсказывающая
+$\by \in \RR^r$ по $\bx \in \RR^n$. 
+
+Определяется функция ошибки $S$ на выборке $\mathfrak{D}$ и модели $\bff$ с параметрами $\btheta$. Задачей является поиск наилучших параметров $\btheta^*$, то есть таких, при которых функция ошибки минимальна:
+\begin{equation}
+	\btheta^* = \arg \min_{\btheta \in \Theta} S(\btheta| \mathfrak{D}, \bff).
+	\label{eq::error_function}
+\end{equation}
+
+Однако в случае кореллированных данных $\bX$ задача может оказаться нестабильной.  Одним из таких случаев является и широко распространенный класс линейных моделей:
+\begin{equation}
+	\bff(\bx, \btheta) = \underset{1 \times n}{\bx} \cdot \underset{n \times r}{\btheta}.
+	\label{eq::linear_model}
+\end{equation}
+
+За $\bff(\bX, \btheta)$ обозначена матрица $\left[\bff(\bx_1, \btheta), \bff(\bx_2, \btheta), \hdots, \bff(\bx_m, \btheta)\right]\T$. Рассматривается квадратичная функция ошибки:
+\begin{equation}
+	\btheta^* = \arg \min_{\btheta \in \Theta} {\bigl\| \bff(\bX, \btheta) - \bY \bigr\| }_2^2, 
+	\label{eq::error_linear}
+\end{equation}
+
+
+
+\paragraph{PLS}
+Метод частных наименьших квадратов 
+
+\begin{align}
+	\underset{m \times n}{\bX} &= \underset{m \times l}{\bT\T} \cdot
+	\underset{l \times n}{\bP\T} + \underset{m \times n}{\bE}
+	\label{eq::PLS_X} \\
+	\underset{m \times r}{\bY} &= \underset{m \times l}{\bU\T} \cdot
+	\underset{l \times r}{\bQ\T} + \underset{m \times r}{\bF}
+	\label{eq::PLS_Y}
+\end{align}
+\paragraph{QPFS}
+
+\begin{thebibliography}{1}
+\bibitem{author09anyscience}
+    \BibAuthor{
+    	J. del R.\; Mill?n,
+    	F. \; Renken,
+    	J. \; Mouri?o and
+    	W. \; Gerstner}
+    \BibTitle{Brain-actuated interaction}~//
+    \BibJournal{Artif. Intell.}, 159(2004) 241–259.
+
+\end{thebibliography}
+
+% Решение Программного Комитета:
+%\ACCEPTNOTE
+%\AMENDNOTE
+%\REJECTNOTE
+\end{document}
