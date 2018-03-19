@@ -15,6 +15,7 @@
 \newcommand{\bp}{\mathbf{p}}
 \newcommand{\bq}{\mathbf{q}}
 \newcommand{\bc}{\mathbf{c}}
+\newcommand{\bbb}{\mathbf{b}}
 \newcommand{\bP}{\mathbf{P}}
 \newcommand{\bT}{\mathbf{T}}
 \newcommand{\bQ}{\mathbf{Q}}
@@ -24,7 +25,10 @@
 \newcommand{\bU}{\mathbf{U}}
 \newcommand{\bW}{\mathbf{W}}
 \newcommand{\bI}{\mathbf{I}}
-\newcommand{\T}{^{\text{\tiny\sffamily\upshape\mdseries T}}}
+\newcommand{\Sim}{\textrm{Sim}}
+\newcommand{\Rel}{\textrm{Rel}}
+\newcommand{\cov}{\textrm{cov}}
+\newcommand{\var}{\textrm{var}}
 
 \begin{document}
 %\NOREVIEWERNOTES
@@ -52,16 +56,16 @@
 	\textbf{Ключевые слова}: \emph {декодирование временных рядов, PLS, QPFS}.}
 
 \maketitle
-\linenumbers
+
 \section{Введение}
-Работа посвящена исследованию методов моделирования нейросетевого интерфейса (BCI).
+Работа посвящена исследованию методов моделирования нейросетевого интерфейса (BCI) \cite{Motrenko17ECoG}.
 Входные данные -- сигналы мозга, полученные с помощью электрокортикографии (ECoG) и электроэнцефалографии (EEG). ECoG-сигналы имеют лучшее разрешение и большую амплитуду, однако для их получения требуется непосредственное подсоединение электродов к коре головного мозга. Одной из задач при построении систем BCI является предсказание намерений.
 
 Предлагается декодировать исходные сигналы и спрогнозировать траекторию движения верхних конечностей. Исходное пространство имеет избыточно высокую размерность. Линейная зависимость между признаками приводит к мультиколлинеарности. Для устранения мультиколлинеарности предлагается применить методы понижения размерности и отбора признаков.
 
 Признаковое описание многомерного временного ряда существует в пространствах независимых и зависимых переменных. Для учета существующих закономерностей в исходном и выходном пространстве используется скрытое пространство латентных переменных.  В скрытом пространстве происходит согласование между образами исходных пространств.
 
-В эксперименте рассматриваются следующие модели: метод частных наименьших квадратов (PLS) \cite{Isachenko17PLS}, отбор признаков с помощью квадратичного программирования (QPFS), метод Белсли (Belsley) и вариации этих методов.
+В эксперименте рассматриваются следующие модели: метод частных наименьших квадратов (PLS) \cite{Isachenko17PLS}, отбор признаков с помощью квадратичного программирования (QPFS) \cite{Katrutsa16QPFS}, метод Белсли (Belsley) и вариации этих методов.
 % Нелинейные модели -- нейросети.
 
 PLS является методом отбора признаков
@@ -71,14 +75,15 @@ PLS является методом отбора признаков
 Предлагается система тестирования прогностических моделей с оценкой качества и анализом ошибки. Подобный инструмент может применяться не только в задаче анализа сигналов мозга, но и во многих других задачах, связанных с прогнозированием многомерных временных рядов.
 
 \section{Постановка задачи}
-% Постановка задачи предсказания
+\paragraph{Постановка задачи предсказания}
+
 Задана выборка $\mathfrak{D}= \left( \bX, \bY \right)$, где $\bX \in \RR^{m \times n}$ --- матрица объектов, $\bY \in \RR^{m \times r}$ --- матрица ответов. Имеется некоторая модель $\bff$ с набором параметров $\btheta$ из пространства $\Theta$, предсказывающая
 $\by \in \RR^r$ по $\bx \in \RR^n$. 
 
-Определяется функция ошибки $S$ на выборке $\mathfrak{D}$ и модели $\bff$ с параметрами $\btheta$. Задачей является поиск наилучших параметров $\btheta^*$, то есть таких, при которых функция ошибки минимальна:
+Определяется функция ошибки $S$ на выборке $\mathfrak{D}$  и модели $\bff$ с параметрами $\btheta$. Задачей является поиск наилучших параметров $\btheta^*$, то есть таких, при которых функция ошибки минимальна:
 \begin{equation}
-	\btheta^* = \arg \min_{\btheta \in \Theta} S(\btheta| \mathfrak{D}, \bff).
-	\label{eq::error_function}
+\btheta^* = \arg \min_{\btheta \in \Theta} S(\btheta| \mathfrak{D}, \bff).
+\label{eq::error_function}
 \end{equation}
 
 Однако в случае кореллированных данных $\bX$ задача может оказаться нестабильной.  Одним из таких случаев является и широко распространенный класс линейных моделей:
@@ -87,7 +92,7 @@ $\by \in \RR^r$ по $\bx \in \RR^n$.
 	\label{eq::linear_model}
 \end{equation}
 
-За $\bff(\bX, \btheta)$ обозначена матрица $\left[\bff(\bx_1, \btheta), \bff(\bx_2, \btheta), \hdots, \bff(\bx_m, \btheta)\right]\T$. Рассматривается квадратичная функция ошибки:
+За $\bff(\bX, \btheta)$ обозначена матрица $\left[\bff(\bx_1, \btheta), \bff(\bx_2, \btheta), \dots, \bff(\bx_m, \btheta)\right]\T$. Рассматривается квадратичная функция ошибки:
 \begin{equation}
 	{\bigl\| \bff(\bX, \btheta) - \bY \bigr\| }_2^2 
 	\rightarrow \min_{\btheta \in \Theta} 
@@ -95,7 +100,7 @@ $\by \in \RR^r$ по $\bx \in \RR^n$.
 \end{equation}
 Если пространство признаков имеет высокую размерность, вероятно, что матрица $\bX$ близка к вырожденной, а потому решение проблемы оптимизации \eqref{eq::error_linear} будет нестабильным. Поэтому для решения указанной задачи применяются методы отбора признаков, такие как PLS и QPFS.
 
-\paragraph{PLS.  \cite{Isachenko17PLS}}
+\paragraph{PLS.}
 Метод частных наименьших квадратов PLS рассматривает в качестве признаков линейные комбинации исходных. Предполагается, что существует скрытое пространство латентных переменных малой размерности $l$ ($l < n, r$). Происходит поиск матрицы $\bT \in \RR^{m \times l}$, которая наилучшим образом описывает матрицы $\bX$ и $\bY$. 
 
 \begin{align}
@@ -112,6 +117,63 @@ $\bT$ ---
 
 \paragraph{QPFS} Сформулируем задачу отбора признаков.  
 
+Чтобы вычислить матрицу $\bQ$ и вектор $\bbb$
+
+\begin{align}
+\Sim & \label{eq::Sim} \\
+\Rel & \label{eq::Rel}
+\end{align}
+
+Коэффициент корреляции Пирсона определяется как:
+
+$$\rho_{ij} =\frac{
+\cov(\bx_i, \bx_j)
+}{
+\sqrt{\var(\bx_i) \cdot \var(\bx_j)}
+} $$
+
+
+\paragraph{Метрики}
+
+Пусть имеются истинный прогноз $\bY = (\by_1, \by_2, \dots, \by_m)$ и предсказание $\mathbf{\hat{Y}} = (\mathbf{\hat{y}}_1, \mathbf{\hat{y}}_2, \dots, \mathbf{\hat{y}}_m)$; $\by_i$ и $\mathbf{\hat{y}}_i$, $i = 1, 2, \dots, m$ -- вектора размерности $r$.
+
+Среднеквадратичная  ошибка (mean squared error):
+
+\begin{equation}
+	\text{MSE}(\bY, \mathbf{\hat{Y}}) =
+	\frac{1}{m}
+	\sum^m_{i=1}
+	{\bigl\| \mathbf{y}_i - \mathbf{\hat{y}}_i \bigr\| }_2^2 
+	\label{eq::error_mse}
+\end{equation}
+
+Корень среднеквадратичной ошибки (root-mean-squared error):
+
+\begin{equation}
+\text{RMSE}(\bY, \mathbf{\hat{Y}}) =
+\sqrt{\text{MSE}(\bY, \mathbf{\hat{Y}})}
+\label{eq::error_rmse}
+\end{equation}
+
+Нормированная среднеквадратичная ошибка (scaled mean squared error):
+
+\begin{equation}
+\text{sMSE}(\bY, \mathbf{\hat{Y}}) =
+\frac{
+\sum^m_{i=1}
+{\bigl\| \mathbf{y}_i - \mathbf{\hat{y}}_i \bigr\| }_2^2 
+}{
+\sum^m_{i=1}
+{\bigl\| \mathbf{y}_i - \mathbf{\overline{y}} \bigr\| }_2^2 
+}, \;
+\mathbf{\overline{y}} = \frac{1}{m} \sum_{i=1}^{m} y_i
+\label{eq::error_smse}
+\end{equation}
+
+
+MAE, MADE, Коэффициент корреляции. Различные параметры модели из \cite{Katrutsa16QPFS}.
+
+
 \begin{thebibliography}{1}
 \bibitem{bci}
     \BibAuthor{
@@ -123,12 +185,26 @@ $\bT$ ---
     \BibJournal{Artif. Intell.}, 159(2004) 241–259.
 \bibitem{Isachenko17PLS}
     \BibAuthor{
-    	Isachenko \; R,
+    	Isachenko \; R.,
     	Vladimirova \; M.,
-    	Strijov. \; V.}
+    	Strijov \; V.}
     \BibTitle{Dimensionality reduction for time series decoding and
     	forecasting problems}~//
     \BibJournal{Machine Learning and Data Analysis}.
+\bibitem{Katrutsa16QPFS}
+    \BibAuthor{
+    	Katrutsa \; A.,
+    	Strijov \; V.}
+    \BibTitle{Comprehensive study of feature selection methods to solve
+    	multicollinearity problem according to evaluation criteria}~//
+    \BibJournal{Expert System with Applications}, 76, 1-11.
+\bibitem{Motrenko17ECoG}
+	\BibAuthor{
+		Motrenko \; A.,
+		Strijov \; V.}
+	\BibTitle{Multi-way Feature Selection for ECoG-based Brain-Computer
+	Interface}~//
+	\BibJournal{???}.
 
 \end{thebibliography}
 
