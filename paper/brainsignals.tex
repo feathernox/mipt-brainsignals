@@ -25,12 +25,14 @@
 \newcommand{\bU}{\mathbf{U}}
 \newcommand{\bW}{\mathbf{W}}
 \newcommand{\bI}{\mathbf{I}}
-\newcommand{\Sim}{\textrm{Sim}}
-\newcommand{\Rel}{\textrm{Rel}}
+\newcommand{\Sim}{\myop{Sim}}
+\newcommand{\Rel}{\myop{Rel}}
 \newcommand{\var}{\textrm{var}}
 \newcommand{\cJ}{\mathcal{J}}
 \newcommand{\cA}{\mathcal{A}}
-\newcommand{\bchi}{\mathbf{\chi}}
+\newcommand{\cQ}{\mathcal{Q}}
+\newcommand{\xfeat}{\mathbf{\chi}}
+\newcommand{\yfeat}{y}
 
 %\NOREVIEWERNOTES
 \title
@@ -67,7 +69,7 @@
 
 Признаковое описание многомерного временного ряда существует в пространствах независимых и зависимых переменных. Для учета существующих закономерностей в исходном и выходном пространстве используется скрытое пространство латентных переменных.  В скрытом пространстве происходит согласование между образами исходных пространств.
 
-В эксперименте рассматриваются следующие модели: метод частных наименьших квадратов (PLS) \cite{Isachenko17PLS}, отбор признаков с помощью квадратичного программирования (QPFS) \cite{Katrutsa16QPFS}, метод Белсли (Belsley) и вариации этих методов.
+В эксперименте рассматриваются следующие модели: метод частных наименьших квадратов (PLS) \cite{Isachenko17PLS}, отбор признаков с помощью квадратичного программирования (QPFS) \cite{Katrutsa17QPFS}, метод Белсли (Belsley) и вариации этих методов.
 % Нелинейные модели -- нейросети.
 
 PLS является методом отбора признаков
@@ -79,7 +81,7 @@ PLS является методом отбора признаков
 \section{Постановка задачи}
 \paragraph{Постановка задачи предсказания}
 
-Задана выборка $\mathfrak{D}= \left( \bX, \bY \right)$, где $\bX \in \RR^{m \times n}$ --- матрица объектов, $\bX = \left[ \bchi_1 \dots \bchi_n \right]$, где $\bchi_j \in \mathbb{R}^{m}$ --- вектор значений $j$-го признака на элементах выборки; $\bY \in \RR^{m \times r}$ --- матрица ответов. Имеется линейная модель $\bff$ с набором параметров $\btheta$ из пространства $\RR^{n \times r}$, предсказывающая
+Задана выборка $\mathfrak{D}= \left( \bX, \bY \right)$, где $\bX \in \RR^{m \times n}$ --- матрица объектов, $\bX = \left[ \xfeat_1 \dots \xfeat_n \right]$, где $\xfeat_j \in \mathbb{R}^{m}$ --- вектор значений $j$-го признака на элементах выборки; $\bY \in \RR^{m \times r}$ --- матрица ответов, $\bY = \left[ \yfeat_1 \dots \yfeat_r \right]$. Имеется линейная модель $\bff$ с набором параметров $\btheta$ из пространства $\RR^{n \times r}$, предсказывающая
 $\by \in \RR^r$ по $\bx \in \RR^n$, следующего вида:
 \begin{equation}
 \bff(\bx, \btheta) = \underset{1 \times n}{\bx}\T \underset{n \times r}{\btheta}.
@@ -90,7 +92,7 @@ $\by \in \RR^r$ по $\bx \in \RR^n$, следующего вида:
 Задана функция ошибки $S$ на выборке $\mathfrak{D}$  и модели $\bff$ с параметрами $\btheta$.
  Задачей является поиск наилучших параметров $\btheta^*$, то есть таких, при которых функция ошибки минимальна:
 \begin{equation}
-\btheta^* = \arg \min_{\btheta \in \Theta} S(\btheta| \mathfrak{D}, \bff).
+\btheta^* = \argmin_{\btheta \in \Theta} S(\btheta| \mathfrak{D}, \bff).
 \label{eq::error_function}
 \end{equation}
 
@@ -119,12 +121,18 @@ $\by \in \RR^r$ по $\bx \in \RR^n$, следующего вида:
 
 Тогда задача предсказания определяется как поиск набора признаков $\cA$ и матрицы параметров $\btheta^* \in \RR^{|\cA| \times r}$ такого, что:
 \begin{equation}
-\btheta^* = \arg \min_{\btheta  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \bff)	\label{eq::fs_problem}
+\btheta^* = \arg \min_{\btheta  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \bff)	\label{eq::fs_forecast}
 \end{equation}
 
 
-Обозначим $X_{\cA}$ матрицу, столбцы которой --- векторы признаков, индексы которых находятся в $\cA$. В случае $X_{\cA}$, 
+Задача отбора признаков поставлена как:
+\begin{equation}
+	\cA^* = \argmin_{\cA \in cJ} Q(\cA | \bX, \by), \label{eq::fs_problem}
+\end{equation}
 
+где $Q : \cA \to \RR$ --- это некоторый критерий качества,который определяет качество выбранного подмножества признаков $\cA \subseteq \cJ$.
+
+Для решения этой задачи не обязательно требуется оценка оптимального вектора параметров $\btheta^*$. Она использует зависимости между векторами $\xfeat_j, j \in \cJ$ и целевыми векторами $y_i, i \in \{1, \dots, r \}$.
 
 \paragraph{PLS.}
 Метод частных наименьших квадратов PLS рассматривает в качестве признаков линейные комбинации исходных. Предполагается, что существует скрытое пространство латентных переменных малой размерности $l$ ($l < n, r$). Происходит поиск матрицы $\bT \in \RR^{m \times l}$, которая наилучшим образом описывает матрицы $\bX$ и $\bY$. 
@@ -200,7 +208,9 @@ $$\rho_{ij} =\frac{
 \end{equation}
 
 
-MAE, MADE, Коэффициент корреляции. Различные параметры модели из \cite{Katrutsa16QPFS}.
+MAE, MADE, Коэффициент корреляции. Различные параметры модели из \cite{Katrutsa17QPFS}.
+
+Сложность модели
 
 
 \begin{thebibliography}{1}
@@ -220,12 +230,18 @@ MAE, MADE, Коэффициент корреляции. Различные параметры модели из \cite{Katrutsa1
     \BibTitle{Dimensionality reduction for time series decoding and
     	forecasting problems}~//
     \BibJournal{Machine Learning and Data Analysis}.
-\bibitem{Katrutsa16QPFS}
+\bibitem{Katrutsa15StressTest}
+	\BibAuthor{
+	Katrutsa \; A.,
+	Strijov \; V.}
+	\BibTitle{Stress test procedure for feature selection algorithms}, 2015~//
+\BibJournal{Expert System with Applications}, 142, 172–183
+\bibitem{Katrutsa17QPFS}
     \BibAuthor{
     	Katrutsa \; A.,
     	Strijov \; V.}
     \BibTitle{Comprehensive study of feature selection methods to solve
-    	multicollinearity problem according to evaluation criteria}~//
+    	multicollinearity problem according to evaluation criteria}, 2017~//
     \BibJournal{Expert System with Applications}, 76, 1-11.
 \bibitem{Motrenko17ECoG}
 	\BibAuthor{
