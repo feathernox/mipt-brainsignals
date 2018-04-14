@@ -2,6 +2,7 @@
 \usepackage{jmlda}
 
 \newcommand{\bff}{\mathbf{f}}
+\newcommand{\ba}{\mathbf{a}}
 \newcommand{\bx}{\mathbf{x}}
 \newcommand{\by}{\mathbf{y}}
 \newcommand{\btheta}{\boldsymbol{\theta}}
@@ -33,6 +34,7 @@
 \newcommand{\cQ}{\mathcal{Q}}
 \newcommand{\xfeat}{\mathbf{\chi}}
 \newcommand{\yfeat}{y}
+\newcommand{\BB}{\mathbb{B}}
 
 %\NOREVIEWERNOTES
 \title
@@ -121,7 +123,7 @@ $\by \in \RR^r$ по $\bx \in \RR^n$, следующего вида:
 
 Тогда задача предсказания определяется как поиск набора признаков $\cA$ и матрицы параметров $\btheta^* \in \RR^{|\cA| \times r}$ такого, что:
 \begin{equation}
-\btheta^* = \arg \min_{\btheta  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \bff)	\label{eq::fs_forecast}
+\btheta^* = \argmin_{\btheta  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \bff)	\label{eq::fs_forecast}
 \end{equation}
 
 
@@ -134,7 +136,17 @@ $\by \in \RR^r$ по $\bx \in \RR^n$, следующего вида:
 
 Для решения этой задачи не обязательно требуется оценка оптимального вектора параметров $\btheta^*$. Она использует зависимости между векторами $\xfeat_j, j \in \cJ$ и целевыми векторами $y_i, i \in \{1, \dots, r \}$.
 
+Пусть $\ba \in \BB^n = \{0, 1\}^n$ -- вектор индикаторов принадлежности признаков подмножеству $cA$ -- то есть $\ba_j = 1$ тогда и только тогда, когда $j \in \cA$. Тогда задача $\ref{eq::fs_problem}$ может быть записана как:
+\begin{equation}
+	\ba^* = \argmin_{\ba \in \BB^n} Q(\cA | \bX, \by), \label{eq::fs_vec_problem}
+\end{equation}
+где $Q : \BB^n \to \RR$ -- критерий $Q$, но определенный на $ \BB^n $; связь между вектором $\ba^*$ и множеством $\cA^*$ определяется через:
+\begin{equation}
+	\ba^*_j = 1 \Leftrightarrow j \in \cA^*, j \in \cJ. \label{eq::fs_index_correspondence}
+\end{equation}
+
 \paragraph{PLS.}
+
 Метод частных наименьших квадратов PLS рассматривает в качестве признаков линейные комбинации исходных. Предполагается, что существует скрытое пространство латентных переменных малой размерности $l$ ($l < n, r$). Происходит поиск матрицы $\bT \in \RR^{m \times l}$, которая наилучшим образом описывает матрицы $\bX$ и $\bY$. 
 
 \begin{align}
