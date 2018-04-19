@@ -45,16 +45,22 @@ def total_square_sum(Y_true):
     return score
 
 
-def determination_coefficient(Y_true, Y_pred):
+def determination_coefficient(Y_true, Y_pred, adjusted=True):
     '''
 
     :param Y_true:
     :param Y_pred:
+    :param adjusted:
     :return:
     '''
     rss = residual_square_sum(Y_true, Y_pred)
     tss = total_square_sum(Y_true)
-    score = 1 - rss / tss
+    if adjusted:
+        # check Y_pred is 2d
+        m, k = Y_pred.shape
+        score = 1 - (rss / tss) * ((m - k) / (m - 1))
+    else:
+        score = 1 - rss / tss
 
     return score
 
@@ -72,4 +78,4 @@ def variance_inflation_factor(Y_true, Y_pred):
     return score
 
 
-def
+def variance_inflation_factor(Y_true, Y_pred)
