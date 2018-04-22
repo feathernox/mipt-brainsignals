@@ -1,10 +1,10 @@
 import numpy as np
 
 def _check_features_array(A):
-    return True
+    return A
 
 def _check_array(Y):
-    return True
+    return Y
 
 def _check_regression_answers(Y_true, Y_pred):
     '''
@@ -41,9 +41,9 @@ def total_square_sum(Y_true):
     :param Y_true:
     :return:
     '''
-    Y_true = _check_array(Y)
+    Y_true = _check_array(Y_true)
 
-    score = ((Y_true - Y_true.mean()) ** 2)
+    score = ((Y_true - Y_true.mean()) ** 2).sum()
 
     return score
 
@@ -58,13 +58,15 @@ def determination_coefficient(Y_true, Y_pred, adjusted=True):
     '''
     rss = residual_square_sum(Y_true, Y_pred)
     tss = total_square_sum(Y_true)
+    #print("RSS", "TSS", rss, tss)
     if adjusted:
         # check Y_pred is 2d
         m, k = Y_true.shape
+        #print("M", "K", m, k)
         score = 1 - (rss / tss) * ((m - k) / (m - 1))
     else:
         score = 1 - rss / tss
-
+    #print(score)
     return score
 
 
@@ -82,7 +84,7 @@ def variance_inflation_factor(Y_true, Y_pred):
     return score
 
 
-def mallowss_Cp(Y_true, Y_pred, Y_pred_p, p):
+def mallows_Cp(Y_true, Y_pred, Y_pred_p, p):
     '''
 
     :param Y_true:
