@@ -23,24 +23,35 @@ def _check_regression_answers(Y_true, Y_pred):
 
 
 def residual_square_sum(Y_true, Y_pred):
-    '''
+    """
+    Residual sum of squares.
 
-    :param Y_true:
-    :param Y_pred:
-    :return:
-    '''
+    :param Y_true: array-like of shape = (n_samples) or (n_samples, n_features)
+        True responses.
+
+    :param Y_pred: array-like of shape = (n_samples) or (n_samples, n_features)
+        Predicted responses.
+
+    :return score: float
+        Value of metric.
+    """
     Y_true, Y_pred = _check_regression_answers(Y_true, Y_pred)
 
     score = ((Y_true - Y_pred) ** 2).sum()
 
     return score
 
-def total_square_sum(Y_true):
-    '''
 
-    :param Y_true:
-    :return:
-    '''
+def total_square_sum(Y_true):
+    """
+    Total sum of squares.
+
+    :param Y_true: array-like of shape = (n_samples) or (n_samples, n_features)
+        True responses.
+
+    :return score: float
+        Value of metric.
+    """
     Y_true = _check_array(Y)
 
     score = ((Y_true - Y_true.mean()) ** 2)
@@ -49,13 +60,13 @@ def total_square_sum(Y_true):
 
 
 def determination_coefficient(Y_true, Y_pred, adjusted=True):
-    '''
+    """
 
     :param Y_true:
     :param Y_pred:
     :param adjusted:
     :return:
-    '''
+    """
     rss = residual_square_sum(Y_true, Y_pred)
     tss = total_square_sum(Y_true)
     if adjusted:
@@ -83,14 +94,14 @@ def variance_inflation_factor(Y_true, Y_pred):
 
 
 def mallowss_Cp(Y_true, Y_pred, Y_pred_p, p):
-    '''
+    """
 
     :param Y_true:
     :param Y_pred:
     :param Y_pred_p:
     :param p:
     :return:
-    '''
+    """
     m = Y_true.shape[0]
 
     # check that p is int or bool array
