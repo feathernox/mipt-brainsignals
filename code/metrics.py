@@ -23,43 +23,25 @@ def _check_regression_answers(Y_true, Y_pred):
 
 
 def residual_square_sum(Y_true, Y_pred):
-    """
-    Residual sum of squares.
+    '''
 
-    :param Y_true: array-like of shape = (n_samples) or (n_samples, n_features)
-        True responses.
-
-    :param Y_pred: array-like of shape = (n_samples) or (n_samples, n_features)
-        Predicted responses.
-
-    :return score: float
-        Value of metric.
-    """
+    :param Y_true:
+    :param Y_pred:
+    :return:
+    '''
     Y_true, Y_pred = _check_regression_answers(Y_true, Y_pred)
 
     score = ((Y_true - Y_pred) ** 2).sum()
 
     return score
 
-
 def total_square_sum(Y_true):
-    """
-    Total sum of squares.
+    '''
 
-<<<<<<< HEAD
-    :param Y_true: array-like of shape = (n_samples) or (n_samples, n_features)
-        True responses.
-
-    :return score: float
-        Value of metric.
-    """
-    Y_true = _check_array(Y)
-=======
     :param Y_true:
     :return:
     '''
     Y_true = _check_array(Y_true)
->>>>>>> 09f69cc4550ef63d6a7ab97c8b187ba11fe54e90
 
     score = ((Y_true - Y_true.mean()) ** 2).sum()
 
@@ -67,13 +49,13 @@ def total_square_sum(Y_true):
 
 
 def determination_coefficient(Y_true, Y_pred, adjusted=True):
-    """
+    '''
 
     :param Y_true:
     :param Y_pred:
     :param adjusted:
     :return:
-    """
+    '''
     rss = residual_square_sum(Y_true, Y_pred)
     tss = total_square_sum(Y_true)
     #print("RSS", "TSS", rss, tss)
@@ -102,26 +84,21 @@ def variance_inflation_factor(Y_true, Y_pred):
     return score
 
 
-<<<<<<< HEAD
-def mallowss_Cp(Y_true, Y_pred, Y_pred_p, p):
-    """
-=======
 def mallows_Cp(Y_true, Y_pred, Y_pred_p, p):
     '''
->>>>>>> 09f69cc4550ef63d6a7ab97c8b187ba11fe54e90
 
     :param Y_true:
     :param Y_pred:
     :param Y_pred_p:
     :param p:
     :return:
-    """
+    '''
     m = Y_true.shape[0]
 
     # check that p is int or bool array
     rss = residual_square_sum(Y_true, Y_pred)
     rss_p = residual_square_sum(Y_true, Y_pred_p)
-
+    #print(rss, rss_p, ((Y_pred-Y_pred_p)**2).sum())
     score = rss_p / rss - m + 2 * p
     return score
 
