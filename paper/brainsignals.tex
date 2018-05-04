@@ -10,10 +10,17 @@
 \newcommand{\yobj}{\mathbf{y}}
 
 \newcommand{\fmodel}{\mathbf{f}}
+\newcommand{\fmat}{\mathbf{F}}
 \newcommand{\thmat}{\boldsymbol{\Theta}}
 \newcommand{\serrf}{S}
 
-\newcommand{\ba}{\mathbf{a}}
+\newcommand{\featset}{\mathcal{J}}
+\newcommand{\featsub}{\mathcal{A}}
+
+\newcommand{\fscrit}{Q}
+
+\newcommand{\featvec}{\mathbf{a}}
+\newcommand{\BB}{\mathbb{B}}
 
 \newcommand{\bbeta}{\boldsymbol{\beta}}
 
@@ -37,10 +44,9 @@
 \newcommand{\Sim}{\myop{Sim}}
 \newcommand{\Rel}{\myop{Rel}}
 \newcommand{\var}{\textrm{var}}
-\newcommand{\cJ}{\mathcal{J}}
-\newcommand{\cA}{\mathcal{A}}
-\newcommand{\cQ}{\mathcal{Q}}
-\newcommand{\BB}{\mathbb{B}}
+
+
+
 
 %\NOREVIEWERNOTES
 \title
@@ -90,8 +96,8 @@
 Задана выборка $\sample = \left( \xmat, \ymat \right)$,
 где $\xmat = \left[ \xfeat_1 \dots \xfeat_n \right] \in \RR^{m \times n}$ --- матрица объектов,
 $\ymat = \left[ \yfeat_1 \dots \yfeat_r \right] \in \RR^{m \times r}$ --- целевая матрица .
-Вектор $\xfeat_i \in \RR^{m}$ --- значения $i$-го признака на элементах выборки; 
-вектор $\yfeat_j \in \RR^{m}$ --- $j$-й целевой столбец.
+Вектор $\xfeat_j \in \RR^{m}$ --- значения $j$-го признака на элементах выборки; 
+вектор $\yfeat_i \in \RR^{m}$ --- $i$-й целевой столбец.
 Имеется линейная модель $\fmodel(\xobj, \thmat)$ с набором параметров $\thmat \in \RR^{n \times r}$, аппроксимирующая $\yobj \in \RR^r$ по $\xobj \in \RR^n$:
 
 \begin{equation}
@@ -100,9 +106,11 @@ $\ymat = \left[ \yfeat_1 \dots \yfeat_r \right] \in \RR^{m \times r}$ --- целева
 \underset{r \times n}{\thmat\T}
 \underset{n \times 1}{\xobj}.
 \end{equation}
+За $\fmat(\xmat, \thmat)$ обозначена матрица $[
+\fmodel(\xobj_1, \thmat), \dots, \fmodel(\xobj_m, \thmat)]\T$.
 
-На выборке $\mathfrak{D}$  и модели $\fmodel(\xobj, \thmat)$ задана функция ошибки $\serrf$.
-Задачей является поиск наилучших параметров $\thmat^*$,
+На выборке $\mathfrak{D}$ и модели $\fmodel(\xobj, \thmat)$ задана функция ошибки $\serrf$.
+Задачей является поиск наилучших параметров $\thmat$,
 доставляющих минимум функции ошибки $\serrf$:
 \begin{equation}
 \label{eq::param_problem}
@@ -112,73 +120,89 @@ $\ymat = \left[ \yfeat_1 \dots \yfeat_r \right] \in \RR^{m \times r}$ --- целева
 \end{equation}
 
 При наличии мультикоррелированных столбцов в матрице $\xmat$, что вероятно, если пространство признаков имеет высокую размерность, решение задачи \eqref{eq::param_problem}
-выбора матрицы параметров $\thmat$ нестабильно. Определение устойчивости (стабильности) модели приведено в разделе "Анализ ошибки".
+выбора матрицы параметров $\thmat$ нестабильно. Определение устойчивости (стабильности) модели приведено в разделе <<Анализ ошибки>>.
 
-\paragraph{Постановка задачи отбора признаков}
+\paragraph{Задача отбора признаков}
 
-Пусть $\cJ = \{ 1, \dots, n \}$ --- множество индексов признаков, а $\cA \subseteq \cJ$ --- его некоторое подмножество. Тогда линейную модель $\fmodel$ на подмножестве признаков $\cA$ можно определить как:
+Пусть $\featset = \{ 1, \dots, n \}$ --- множество индексов признаков,
+$\featsub \subseteq \featset$ --- его некоторое подмножество.
+Определим линейную модель $\fmodel$ на подмножестве признаков $\featsub$:
 
 \begin{equation}
-\fmodel (\xobj, \cA, \thmat) = \underset{1 \times |\cA|}{\xobj_{\cA}} \underset{|\cA| \times r}{\thmat} \label{eq:fs_model}
+\label{eq:fs_model}
+\fmodel(
+\xobj_{\featsub},
+\thmat_{\featsub}) =
+\underset{r \times |\featsub|}{\thmat_{\featsub}\T}
+\underset{|\featsub| \times 1}{\xobj_{\featsub}}.
 \end{equation}
 
-Функция ошибки $S$ теперь зависит от выборки $\mathfrak{D}$, модели $\fmodel$ с параметрами $\thmat$ и от $\cA$.
-
-Тогда задача предсказания определяется как поиск набора признаков $\cA$ и матрицы параметров $\thmat^* \in \RR^{|\cA| \times r}$ такого, что:
+Задача предсказания \eqref{eq::param_problem} состоит в определении матрицы параметров $\thmat \in \RR^{|\featsub| \times r}$ при заданном множестве $\featsub$ такой, что:
+	
 \begin{equation}
-\thmat^* = \argmin_{\thmat  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \fmodel)   \label{eq::fs_forecast}
+\label{eq::fs_param_problem}
+\thmat^* =
+\argmin_{\thmat  \in \RR^{|\featsub| \times r}}
+\serrf (\theta, \featsub | \sample, \fmodel).
 \end{equation}
 
-
-Задача отбора признаков поставлена как:
+Для нахождения множества $\featsub$ решается задача отбора признаков:
 \begin{equation}
-\cA^* = \argmin_{\cA \in cJ} Q(\cA | \xmat, \yobj), \label{eq::fs_problem}
+\label{eq::fs_problem}
+\featsub^* =
+\argmin_{\featsub \in \featset} 
+\fscrit (\featsub | \xmat, \ymat), 
 \end{equation}
+где $\fscrit : \featsub \to \RR$ ---  некоторый функционал, который определяет качество выбранного подмножества признаков $\featsub \subseteq \featset$.
 
-где $Q : \cA \to \RR$ --- это некоторый критерий качества,который определяет качество выбранного подмножества признаков $\cA \subseteq \cJ$.
+Для решения этой задачи не обязательно требуется оценка оптимального вектора параметров $\thmat^*$.
+Она использует зависимости между векторами $\xfeat_j, j \in \featset$ и целевыми векторами $\yfeat_i, i \in \{1, \dots, r \}$.
 
-Для решения этой задачи не обязательно требуется оценка оптимального вектора параметров $\thmat^*$. Она использует зависимости между векторами $\xfeat_j, j \in \cJ$ и целевыми векторами $y_i, i \in \{1, \dots, r \}$.
-
-Пусть $\ba \in \BB^n = \{0, 1\}^n$ -- вектор индикаторов принадлежности признаков подмножеству $\cA$ -- то есть $\ba_j = 1$ тогда и только тогда, когда $j \in \cA$. Тогда задача $\ref{eq::fs_problem}$ может быть записана как:
+Пусть $\featvec \in \BB^n = \{0, 1\}^n$ -- вектор принадлежности признаков подмножеству $\featsub$.
+Задача $\eqref{eq::fs_problem}$ представлена в виде:
 \begin{equation}
-\ba^* = \argmin_{\ba \in \BB^n} Q(\cA | \xmat, \yobj), \label{eq::fs_vec_problem}
+\label{eq::fs_vec_problem}
+\featvec^* = 
+\argmin_{\featvec \in \BB^n}
+\fscrit(\featsub | \xmat, \ymat), 
 \end{equation}
-где $Q : \BB^n \to \RR$ -- критерий $Q$, но определенный на $ \BB^n $; связь между вектором $\ba^*$ и множеством $\cA^*$ определяется через:
+где $Q : \BB^n \to \RR$ -- критерий $Q$, определенный на $ \BB^n $;
+связь между вектором $\featvec^*$ и множеством $\featsub^*$ определяется как:
 \begin{equation}
-\ba^*_j = 1 \Leftrightarrow j \in \cA^*, j \in \cJ. \label{eq::fs_index_correspondence}
+\label{eq::fs_index_correspondence}
+\featsub^* =
+\{j:
+\featvec^*_j = 1,
+j \in \featset\}. 
 \end{equation}
 
 
 \section {Модели}
 
-В данной работе используются две линейные модели:
-
+В данной работе рассматриваются следующие линейные модели:
 \begin{enumerate}
-	\item Линейная регрессия
-	\item PLS(Partial Least Squares Regression)
+	\item Линейная регрессия.
+	\item PLS(Partial Least Squares Regression).
 \end{enumerate}
+
 \paragraph{Линейная регрессия}
 
-Модель линейной регрессии является линейной моделью
-
+Модель линейной регрессии является линейной моделью \label{eqref::linear_model}.
+Матрица параметров $\thmat \in \RR^{n \times r}$ подбирается таким образом, чтобы минимизировать квадратичную функцию ошибки $\serrf$ \eqref{eq::param_problem}:
 \begin{equation}
-\fmodel(\xobj, \thmat) = \underset{1 \times n}{\xobj}\T \underset{n \times r}{\thmat}.
-\label{eq::linear_regr}
+\label{eq::linreg_error}
+{\bigl\|
+\bF(\xmat, \thmat) -
+\ymat \bigr\|}_2^2
+\rightarrow 
+\min_{
+\thmat \in \RR^{n \times r}}.
 \end{equation}
 
-Параметр $\thmat$ подбирается таким образом, чтобы минимизировать квадратичную функцию ошибки
-
+Решением оптимизационной задачи является:
 \begin{equation}
-{\bigl\| \bF(\xmat, \thmat) - \ymat \bigr\| }_2^2
-\rightarrow \min_{\thmat \in \RR^{n \times r}}
-\label{eq::error_linear}
-\end{equation}
-
-Решение этой оптимизационной задачи можно выразить явно:
-
-\begin{equation}
-{\thmat =  (\xmat^T \xmat) ^{-1} \xmat^T \ymat }
-\label{eq::linear_solution}
+\label{eq::linreg_solution}
+\thmat =  (\xmat\T \xmat) ^{-1} \xmat\T \ymat.
 \end{equation}
 
 
@@ -269,9 +293,9 @@ $$\rho_{ij} =\frac{
 Введем некоторые обозначения.
 
 Напомним, 
-$\cA \subseteq \cJ$ --- некоторое подмножество множества признаков.
+$\featsub \subseteq \featset$ --- некоторое подмножество множества признаков.
 
-$\thmat^* = \argmin_{\thmat  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \fmodel) $ 
+$\thmat^* = \argmin_{\thmat  \in \RR^{|\featsub| \times r}}   S(\theta, \featsub | \mathfrak{D}, \fmodel) $ 
 - предсказанные линейной моделью коэффициенты.
 
 Пусть
