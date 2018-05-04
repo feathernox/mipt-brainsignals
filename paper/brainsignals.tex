@@ -1,15 +1,23 @@
 \documentclass[12pt,twoside]{article}
 \usepackage{jmlda}
 
-\newcommand{\bff}{\mathbf{f}}
+\newcommand{\sample}{\mathfrak{D}}
+\newcommand{\xmat}{\mathbf{X}}
+\newcommand{\ymat}{\mathbf{Y}}
+\newcommand{\xfeat}{\boldsymbol{\chi}}
+\newcommand{\yfeat}{\boldsymbol{\nu}}
+\newcommand{\xobj}{\mathbf{x}}
+\newcommand{\yobj}{\mathbf{y}}
+
+\newcommand{\fmodel}{\mathbf{f}}
+\newcommand{\thmat}{\boldsymbol{\Theta}}
+\newcommand{\serrf}{S}
+
 \newcommand{\ba}{\mathbf{a}}
-\newcommand{\bx}{\mathbf{x}}
-\newcommand{\by}{\mathbf{y}}
-\newcommand{\btheta}{\boldsymbol{\theta}}
+
 \newcommand{\bbeta}{\boldsymbol{\beta}}
-\newcommand{\bY}{\mathbf{Y}}
-\newcommand{\bX}{\mathbf{X}}
-\newcommand{\bTheta}{\boldsymbol{\Theta}}
+
+
 \newcommand{\bw}{\mathbf{w}}
 \newcommand{\bu}{\mathbf{u}}
 \newcommand{\bt}{\mathbf{t}}
@@ -32,8 +40,6 @@
 \newcommand{\cJ}{\mathcal{J}}
 \newcommand{\cA}{\mathcal{A}}
 \newcommand{\cQ}{\mathcal{Q}}
-\newcommand{\xfeat}{\mathbf{\chi}}
-\newcommand{\yfeat}{y}
 \newcommand{\BB}{\mathbb{B}}
 
 %\NOREVIEWERNOTES
@@ -49,21 +55,20 @@
 \organization
 {$^1$ Московский физико-технический институт}
 \abstract
-{Работа посвящена построению системы тестирования прогностических моделей для различных критериев качества.
+{	Работа посвящена построению системы тестирования прогностических моделей, предлагающей различные критерии качества.
 	Рассматривается случай коррелированных входных и выходных сигналов электрокортикограммы и фазовых траекторий движения конечностей высокой размерности.
 	Ставится задача предсказания намерений по сигналам головного мозга.
 	Входные данные -- сигналы электрокортикограммы (ECoG).
 	Для выявления и устранения скрытых зависимостей используются методы снижения размерности пространства и отбора признаков.
-	Предложенная система тестирования оценивает качество и устойчивость прогноза моделей.
+	Предложенная система тестирования оценивает качество прогноза моделей и анализирует ошибку.
 	Вычислительный эксперимент проводится на данных ECoG проекта NeuroTycho.
 	
 	\bigskip
 	\textbf{Ключевые слова}: \emph {декодирование временных рядов, отбор признаков, PLS, QPFS, генетический алгоритм, BCI, электрокортикограмма, траектории движения конечностей}.}
 
 \begin{document}
+
 \maketitle
-
-
 
 \section{Введение}
 В работе исследуются методы моделирования нейросетевого интерфейса (BCI) \cite{Motrenko17ECoG}.
@@ -74,64 +79,69 @@
 Признаковое описание многомерного временного ряда существует в пространствах независимых и зависимых переменных. Для учета существующих закономерностей в исходном и выходном пространстве используется скрытое пространство латентных переменных.  В скрытом пространстве происходит согласование между образами исходных пространств.
 
 В эксперименте рассматриваются следующие модели: линейная регрессия, метод частных наименьших квадратов (PLS) \cite{Isachenko17PLS}, а также методы отбора признаков с помощью квадратичного программирования (QPFS) \cite{Katrutsa17QPFS} и генетического алгоритма.
-% Нелинейные модели -- нейросети.
 
 Предлагается система тестирования прогностических моделей с оценкой качества и анализом ошибки. Подобный инструмент может применяться не только в задаче анализа сигналов мозга, но и во многих других задачах, связанных с прогнозированием многомерных временных рядов.
 
+
+
 \section{Постановка задачи}
-\paragraph{Постановка задачи предсказания}
+\paragraph{Задача предсказания}
 
-Задана выборка $\mathfrak{D}= \left( \bX, \bY \right)$, где $\bX \in \RR^{m \times n}$ --- матрица объектов, $\bX = \left[ \xfeat_1 \dots \xfeat_n \right]$, где $\xfeat_j \in \RR^{m}$ --- вектор значений $j$-го признака на элементах выборки; $\bY \in \RR^{m \times r}$ --- матрица ответов, $\bY = \left[ \yfeat_1 \dots \yfeat_r \right]$. Имеется линейная модель $\bff$ с набором параметров $\btheta$ из пространства $\RR^{n \times r}$, предсказывающая
-$\by \in \RR^r$ по $\bx \in \RR^n$, следующего вида:
+Задана выборка $\sample = \left( \xmat, \ymat \right)$,
+где $\xmat = \left[ \xfeat_1 \dots \xfeat_n \right] \in \RR^{m \times n}$ --- матрица объектов,
+$\ymat = \left[ \yfeat_1 \dots \yfeat_r \right] \in \RR^{m \times r}$ --- целевая матрица .
+Вектор $\xfeat_i \in \RR^{m}$ --- значения $i$-го признака на элементах выборки; 
+вектор $\yfeat_j \in \RR^{m}$ --- $j$-й целевой столбец.
+Имеется линейная модель $\fmodel(\xobj, \thmat)$ с набором параметров $\thmat \in \RR^{n \times r}$, аппроксимирующая $\yobj \in \RR^r$ по $\xobj \in \RR^n$:
+
 \begin{equation}
-\bff(\bx, \btheta) = \underset{1 \times n}{\bx}\T \underset{n \times r}{\btheta}.
 \label{eq::linear_model}
+\fmodel(\xobj, \thmat) =
+\underset{r \times n}{\thmat\T}
+\underset{n \times 1}{\xobj}.
 \end{equation}
 
-
-На выборке $\mathfrak{D}$  и модели $\bff$ с параметрами $\btheta$ задана функция ошибки $S$.
-Задачей является поиск наилучших параметров $\btheta^*$, то есть таких, при которых функция ошибки минимальна:
+На выборке $\mathfrak{D}$  и модели $\fmodel(\xobj, \thmat)$ задана функция ошибки $\serrf$.
+Задачей является поиск наилучших параметров $\thmat^*$,
+доставляющих минимум функции ошибки $\serrf$:
 \begin{equation}
-\btheta^* = \argmin_{\btheta \in \Theta} S(\btheta| \mathfrak{D}, \bff).
-\label{eq::error_function}
+\label{eq::param_problem}
+\thmat^* =
+\argmin_{\thmat \in \RR^{m \times r}} 
+\serrf(\thmat | \sample, \fmodel).
 \end{equation}
 
-В случае кореллированных данных $\bX$ решение задачи выбора оптимального вектора параметров $\btheta$ нестабильно. Определение устойчивости (стабильности) модели приведено в секции "Анализ ошибки"
-
-
-За $\bF(\bX, \btheta)$ обозначена матрица $\left[\bff(\bx_1, \btheta), \bff(\bx_2, \btheta), \dots, \bff(\bx_m, \btheta)\right]\T$. 
-Если пространство признаков имеет высокую размерность, вероятно, что матрица $\bX$ близка к вырожденной, а потому решение проблемы оптимизации \eqref{eq::error_linear} будет нестабильным. Для решения указанной задачи применяются методы отбора признаков.
-
-
+При наличии мультикоррелированных столбцов в матрице $\xmat$, что вероятно, если пространство признаков имеет высокую размерность, решение задачи \eqref{eq::param_problem}
+выбора матрицы параметров $\thmat$ нестабильно. Определение устойчивости (стабильности) модели приведено в разделе "Анализ ошибки".
 
 \paragraph{Постановка задачи отбора признаков}
 
-Пусть $\cJ = \{ 1, \dots, n \}$ --- множество индексов признаков, а $\cA \subseteq \cJ$ --- его некоторое подмножество. Тогда линейную модель $\bff$ на подмножестве признаков $\cA$ можно определить как:
+Пусть $\cJ = \{ 1, \dots, n \}$ --- множество индексов признаков, а $\cA \subseteq \cJ$ --- его некоторое подмножество. Тогда линейную модель $\fmodel$ на подмножестве признаков $\cA$ можно определить как:
 
 \begin{equation}
-\bff (\bx, \cA, \btheta) = \underset{1 \times |\cA|}{\bx_{\cA}} \underset{|\cA| \times r}{\btheta} \label{eq:fs_model}
+\fmodel (\xobj, \cA, \thmat) = \underset{1 \times |\cA|}{\xobj_{\cA}} \underset{|\cA| \times r}{\thmat} \label{eq:fs_model}
 \end{equation}
 
-Функция ошибки $S$ теперь зависит от выборки $\mathfrak{D}$, модели $\bff$ с параметрами $\btheta$ и от $\cA$.
+Функция ошибки $S$ теперь зависит от выборки $\mathfrak{D}$, модели $\fmodel$ с параметрами $\thmat$ и от $\cA$.
 
-Тогда задача предсказания определяется как поиск набора признаков $\cA$ и матрицы параметров $\btheta^* \in \RR^{|\cA| \times r}$ такого, что:
+Тогда задача предсказания определяется как поиск набора признаков $\cA$ и матрицы параметров $\thmat^* \in \RR^{|\cA| \times r}$ такого, что:
 \begin{equation}
-\btheta^* = \argmin_{\btheta  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \bff)   \label{eq::fs_forecast}
+\thmat^* = \argmin_{\thmat  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \fmodel)   \label{eq::fs_forecast}
 \end{equation}
 
 
 Задача отбора признаков поставлена как:
 \begin{equation}
-\cA^* = \argmin_{\cA \in cJ} Q(\cA | \bX, \by), \label{eq::fs_problem}
+\cA^* = \argmin_{\cA \in cJ} Q(\cA | \xmat, \yobj), \label{eq::fs_problem}
 \end{equation}
 
 где $Q : \cA \to \RR$ --- это некоторый критерий качества,который определяет качество выбранного подмножества признаков $\cA \subseteq \cJ$.
 
-Для решения этой задачи не обязательно требуется оценка оптимального вектора параметров $\btheta^*$. Она использует зависимости между векторами $\xfeat_j, j \in \cJ$ и целевыми векторами $y_i, i \in \{1, \dots, r \}$.
+Для решения этой задачи не обязательно требуется оценка оптимального вектора параметров $\thmat^*$. Она использует зависимости между векторами $\xfeat_j, j \in \cJ$ и целевыми векторами $y_i, i \in \{1, \dots, r \}$.
 
 Пусть $\ba \in \BB^n = \{0, 1\}^n$ -- вектор индикаторов принадлежности признаков подмножеству $\cA$ -- то есть $\ba_j = 1$ тогда и только тогда, когда $j \in \cA$. Тогда задача $\ref{eq::fs_problem}$ может быть записана как:
 \begin{equation}
-\ba^* = \argmin_{\ba \in \BB^n} Q(\cA | \bX, \by), \label{eq::fs_vec_problem}
+\ba^* = \argmin_{\ba \in \BB^n} Q(\cA | \xmat, \yobj), \label{eq::fs_vec_problem}
 \end{equation}
 где $Q : \BB^n \to \RR$ -- критерий $Q$, но определенный на $ \BB^n $; связь между вектором $\ba^*$ и множеством $\cA^*$ определяется через:
 \begin{equation}
@@ -152,22 +162,22 @@ $\by \in \RR^r$ по $\bx \in \RR^n$, следующего вида:
 Модель линейной регрессии является линейной моделью
 
 \begin{equation}
-\bff(\bx, \btheta) = \underset{1 \times n}{\bx}\T \underset{n \times r}{\btheta}.
-\label{eq::linear_model}
+\fmodel(\xobj, \thmat) = \underset{1 \times n}{\xobj}\T \underset{n \times r}{\thmat}.
+\label{eq::linear_regr}
 \end{equation}
 
-Параметр $\btheta$ подбирается таким образом, чтобы минимизировать квадратичную функцию ошибки
+Параметр $\thmat$ подбирается таким образом, чтобы минимизировать квадратичную функцию ошибки
 
 \begin{equation}
-{\bigl\| \bF(\bX, \btheta) - \bY \bigr\| }_2^2
-\rightarrow \min_{\btheta \in \RR^{n \times r}}
+{\bigl\| \bF(\xmat, \thmat) - \ymat \bigr\| }_2^2
+\rightarrow \min_{\thmat \in \RR^{n \times r}}
 \label{eq::error_linear}
 \end{equation}
 
 Решение этой оптимизационной задачи можно выразить явно:
 
 \begin{equation}
-{\btheta =  (\bX^T \bX) ^{-1} \bX^T \bY }
+{\thmat =  (\xmat^T \xmat) ^{-1} \xmat^T \ymat }
 \label{eq::linear_solution}
 \end{equation}
 
@@ -176,13 +186,13 @@ $\by \in \RR^r$ по $\bx \in \RR^n$, следующего вида:
 
 \paragraph{PLS}
 
-Метод частных наименьших квадратов PLS рассматривает в качестве признаков линейные комбинации исходных. Предполагается, что существует скрытое пространство латентных переменных малой размерности $l$ ($l < n, r$). Происходит поиск матрицы $\bT \in \RR^{m \times l}$, которая наилучшим образом описывает матрицы $\bX$ и $\bY$.
+Метод частных наименьших квадратов PLS рассматривает в качестве признаков линейные комбинации исходных. Предполагается, что существует скрытое пространство латентных переменных малой размерности $l$ ($l < n, r$). Происходит поиск матрицы $\bT \in \RR^{m \times l}$, которая наилучшим образом описывает матрицы $\xmat$ и $\ymat$.
 
 \begin{align}
-\underset{m \times n}{\bX} &= \underset{m \times l}{\bT\T} \cdot
+\underset{m \times n}{\xmat} &= \underset{m \times l}{\bT\T} \cdot
 \underset{l \times n}{\bP\T} + \underset{m \times n}{\bE}
 \label{eq::PLS_X} \\
-\underset{m \times r}{\bY} &= \underset{m \times l}{\bU\T} \cdot
+\underset{m \times r}{\ymat} &= \underset{m \times l}{\bU\T} \cdot
 % \underset{l \times l}{\textrm{diag}(\bbeta)}\cdot
 \underset{l \times r}{\bQ\T} + \underset{m \times r}{\bF}
 \label{eq::PLS_Y}
@@ -211,9 +221,9 @@ $\by \in \RR^r$ по $\bx \in \RR^n$, следующего вида:
 Коэффициент корреляции Пирсона определяется как:
 
 $$\rho_{ij} =\frac{
-	\cov(\bx_i, \bx_j)
+	\cov(\xobj_i, \xobj_j)
 }{
-	\sqrt{\var(\bx_i) \cdot \var(\bx_j)}
+	\sqrt{\var(\xobj_i) \cdot \var(\xobj_j)}
 } $$
 
 
@@ -226,12 +236,12 @@ $$\rho_{ij} =\frac{
 Алгортим состоит из итеративно повторяемых шагов. На каждом шаге происходит отбор, скрещивание и мутация. 
 Обозначим $P_k$ - популяция на шаге k, $f$ — число лучших моделей в популяции, $g$ — число
 моделей для скрещивания, $p$ — вероятность выбора модели для
-мутации, $R(\bff, D)$ - метрика качества.
+мутации, $R(\fmodel, D)$ - метрика качества.
 На каждом шаге алгоритм выполняет следующие действия:
 \begin{enumerate}
 	\item Отбор. Из $P_k$ выбирается f моделей с наименьшим значением метрики K. 
 	\begin{equation}
-	F = f_min_values(R(\bff| \mathfrak{D})).
+	F = f_min_values(R(\fmodel| \mathfrak{D})).
 	\label{eq::error_genetic}
 	\end{equation}
 	
@@ -261,11 +271,11 @@ $$\rho_{ij} =\frac{
 Напомним, 
 $\cA \subseteq \cJ$ --- некоторое подмножество множества признаков.
 
-$\btheta^* = \argmin_{\btheta  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \bff) $ 
+$\thmat^* = \argmin_{\thmat  \in \RR^{|\cA| \times r}}   S(\theta, \cA | \mathfrak{D}, \fmodel) $ 
 - предсказанные линейной моделью коэффициенты.
 
 Пусть
-$\hat{y}  = X\btheta \in R^{m \times r}$ - предсказания линейной модели.
+$\hat{y}  = X\thmat \in R^{m \times r}$ - предсказания линейной модели.
 
 $\epsilon = y - \hat{y}$ - ошибка предсказания
 
@@ -281,7 +291,7 @@ $M$ - множество метрик качества модели (см. ниже в секции Метрики качества)
 
 Пусть $k$ - количество бутстрепных выборок. $K$- множество бутстрепных выборок.
 
-Для изменения множества параметров используется метод семплирования #пространства параметров. Выбираются случайные подвыборки размера r < n. ??? мы этого не делаем вроде, пусть пока лежит.
+Для изменения множества параметров используется метод семплирования пространства параметров. Выбираются случайные подвыборки размера r < n. ??? мы этого не делаем вроде, пусть пока лежит.
 
 Для каждого элемента из $N \times L \times K$ считается ошибка линейной модели при применении данного алгоритма отбора признаков. Можно считать, что полученная выборка сгенерирована из некоторого распределения функции ошибки. Задача анализа ошибки состоит в исследовании свойств данного распределения. Более подробно это будет описано в следующей секции (пока не придумала название).
 
@@ -294,12 +304,12 @@ $M$ - множество метрик качества модели (см. ниже в секции Метрики качества)
 
 Характеристикой является сложность
 
-Пусть имеются истинный прогноз $\bY = (\by_1, \by_2, \dots, \by_m)$ и предсказание $\mathbf{\hat{Y}} = (\mathbf{\hat{y}}_1, \mathbf{\hat{y}}_2, \dots, \mathbf{\hat{y}}_m)$; $\by_i$ и $\mathbf{\hat{y}}_i$, $i = 1, 2, \dots, m$ -- вектора размерности $r$.
+Пусть имеются истинный прогноз $\ymat = (\yobj_1, \yobj_2, \dots, \yobj_m)$ и предсказание $\mathbf{\hat{Y}} = (\mathbf{\hat{y}}_1, \mathbf{\hat{y}}_2, \dots, \mathbf{\hat{y}}_m)$; $\yobj_i$ и $\mathbf{\hat{y}}_i$, $i = 1, 2, \dots, m$ -- вектора размерности $r$.
 
 Среднеквадратичная  ошибка (mean squared error):
 
 \begin{equation}
-\text{MSE}(\bY, \mathbf{\hat{Y}}) =
+\text{MSE}(\ymat, \mathbf{\hat{Y}}) =
 \frac{1}{m}
 \sum^m_{i=1}
 {\bigl\| \mathbf{y}_i - \mathbf{\hat{y}}_i \bigr\| }_2^2 
@@ -309,15 +319,15 @@ $M$ - множество метрик качества модели (см. ниже в секции Метрики качества)
 Корень среднеквадратичной ошибки (root-mean-squared error):
 
 \begin{equation}
-\text{RMSE}(\bY, \mathbf{\hat{Y}}) =
-\sqrt{\text{MSE}(\bY, \mathbf{\hat{Y}})}
+\text{RMSE}(\ymat, \mathbf{\hat{Y}}) =
+\sqrt{\text{MSE}(\ymat, \mathbf{\hat{Y}})}
 \label{eq::error_rmse}
 \end{equation}
 
 Нормированная среднеквадратичная ошибка (scaled mean squared error):
 
 \begin{equation}
-\text{sMSE}(\bY, \mathbf{\hat{Y}}) =
+\text{sMSE}(\ymat, \mathbf{\hat{Y}}) =
 \frac{
 	\sum^m_{i=1}
 	{\bigl\| \mathbf{y}_i - \mathbf{\hat{y}}_i \bigr\| }_2^2 
@@ -333,15 +343,15 @@ $M$ - множество метрик качества модели (см. ниже в секции Метрики качества)
 Предположим, что приз
 
 
-Число обусловленности матрицы $\bX\T
-\bX$ 
+Число обусловленности матрицы $\xmat\T
+\xmat$ 
 
 
 \begin{equation}
 \kappa =  \frac{\lambda_{\textrm{max}}}{\lambda_{\textrm{min}}}
 \end{equation}
 
-Рассматриваются числа обусловленности для $\bX\T \bX$, $\widehat{\bY}\T \widehat{\bY}$. В случае применения модели PLS, будут рассматриваться также числа обусловленности $\bT\T \bT$
+Рассматриваются числа обусловленности для $\xmat\T \xmat$, $\widehat{\ymat}\T \widehat{\ymat}$. В случае применения модели PLS, будут рассматриваться также числа обусловленности $\bT\T \bT$
 
 
 MAE, MADE, Коэффициент корреляции. Различные параметры модели из \cite{Katrutsa17QPFS}.
