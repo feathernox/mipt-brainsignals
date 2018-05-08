@@ -2,47 +2,48 @@
 \usepackage{jmlda}
 
 \newcommand{\sample}{\mathfrak{D}}
-\newcommand{\xmat}{\mathbf{X}}
-\newcommand{\ymat}{\mathbf{Y}}
+\newcommand{\Xmat}{\mathbf{X}}
+\newcommand{\Ymat}{\mathbf{Y}}
 \newcommand{\xfeat}{\boldsymbol{\chi}}
 \newcommand{\yfeat}{\boldsymbol{\nu}}
 \newcommand{\xobj}{\mathbf{x}}
 \newcommand{\yobj}{\mathbf{y}}
 
 \newcommand{\fmodel}{\mathbf{f}}
-\newcommand{\fmat}{\mathbf{F}}
-\newcommand{\thmat}{\boldsymbol{\Theta}}
+\newcommand{\Fmat}{\mathbf{F}}
+\newcommand{\Thmat}{\boldsymbol{\Theta}}
 \newcommand{\serrf}{S}
 
-\newcommand{\featset}{\mathcal{J}}
-\newcommand{\featsub}{\mathcal{A}}
-
+\newcommand{\fsset}{\mathcal{J}}
+\newcommand{\fssub}{\mathcal{A}}
 \newcommand{\fscrit}{Q}
-
-\newcommand{\featvec}{\mathbf{a}}
+\newcommand{\fsvec}{\mathbf{a}}
 \newcommand{\BB}{\mathbb{B}}
 
+\newcommand{\Sim}{\myop{Sim}}
+\newcommand{\Rel}{\myop{Rel}}
+\newcommand{\Qsim}{\mathbf{Q}}
+\newcommand{\brel}{\mathbf{b}}
+\newcommand{\Qsimel}{q}
+\newcommand{\brelel}{b}
+
 \newcommand{\bbeta}{\boldsymbol{\beta}}
-
-
 \newcommand{\bw}{\mathbf{w}}
 \newcommand{\bu}{\mathbf{u}}
 \newcommand{\bt}{\mathbf{t}}
 \newcommand{\bp}{\mathbf{p}}
 \newcommand{\bq}{\mathbf{q}}
 \newcommand{\bc}{\mathbf{c}}
-\newcommand{\bbb}{\mathbf{b}}
+
 \newcommand{\bP}{\mathbf{P}}
 \newcommand{\bT}{\mathbf{T}}
-\newcommand{\bQ}{\mathbf{Q}}
+
 \newcommand{\bC}{\mathbf{C}}
 \newcommand{\bE}{\mathbf{E}}
 \newcommand{\bF}{\mathbf{F}}
 \newcommand{\bU}{\mathbf{U}}
 \newcommand{\bW}{\mathbf{W}}
 \newcommand{\bI}{\mathbf{I}}
-\newcommand{\Sim}{\myop{Sim}}
-\newcommand{\Rel}{\myop{Rel}}
 \newcommand{\var}{\textrm{var}}
 
 
@@ -93,116 +94,112 @@
 \section{Постановка задачи}
 \paragraph{Задача предсказания}
 
-Задана выборка $\sample = \left( \xmat, \ymat \right)$,
-где $\xmat = \left[ \xfeat_1 \dots \xfeat_n \right] \in \RR^{m \times n}$ --- матрица объектов,
-$\ymat = \left[ \yfeat_1 \dots \yfeat_r \right] \in \RR^{m \times r}$ --- целевая матрица .
+Задана выборка $\sample = \left( \Xmat, \Ymat \right)$,
+где $\Xmat = \left[ \xfeat_1 \dots \xfeat_n \right] \in \RR^{m \times n}$ --- матрица объектов,
+$\Ymat = \left[ \yfeat_1 \dots \yfeat_r \right] \in \RR^{m \times r}$ --- целевая матрица .
 Вектор $\xfeat_j \in \RR^{m}$ --- значения $j$-го признака на элементах выборки; 
 вектор $\yfeat_i \in \RR^{m}$ --- $i$-й целевой столбец.
-Имеется линейная модель $\fmodel(\xobj, \thmat)$ с набором параметров $\thmat \in \RR^{n \times r}$, аппроксимирующая $\yobj \in \RR^r$ по $\xobj \in \RR^n$:
+Имеется линейная модель $\fmodel(\xobj, \Thmat)$ с набором параметров $\Thmat \in \RR^{n \times r}$, аппроксимирующая целевой вектор $\yobj \in \RR^r$ по известным значениям признаков объекта $\xobj \in \RR^n$:
 
 \begin{equation}
 \label{eq::linear_model}
-\fmodel(\xobj, \thmat) =
-\underset{r \times n}{\thmat\T}
+\fmodel(\xobj, \Thmat) =
+\underset{r \times n}{\Thmat\T}
 \underset{n \times 1}{\xobj}.
 \end{equation}
-За $\fmat(\xmat, \thmat)$ обозначена матрица $[
-\fmodel(\xobj_1, \thmat), \dots, \fmodel(\xobj_m, \thmat)]\T$.
+За $\Fmat(\Xmat, \Thmat)$ обозначена матрица $[
+\fmodel(\xobj_1, \Thmat), \dots, \fmodel(\xobj_m, \Thmat)]\T$.
 
-На выборке $\mathfrak{D}$ и модели $\fmodel(\xobj, \thmat)$ задана функция ошибки $\serrf$.
-Задачей является поиск наилучших параметров $\thmat$,
+На выборке $\mathfrak{D}$ и модели $\fmodel(\xobj, \Thmat)$ задана функция ошибки $\serrf$.
+Задачей является поиск наилучших параметров $\Thmat$,
 доставляющих минимум функции ошибки $\serrf$:
 \begin{equation}
 \label{eq::param_problem}
-\thmat^* =
-\argmin_{\thmat \in \RR^{m \times r}} 
-\serrf(\thmat | \sample, \fmodel).
+\Thmat^* =
+\argmin_{\Thmat \in \RR^{m \times r}} 
+\serrf(\Thmat | \sample, \fmodel).
 \end{equation}
 
-При наличии мультикоррелированных столбцов в матрице $\xmat$, что вероятно, если пространство признаков имеет высокую размерность, решение задачи \eqref{eq::param_problem}
-выбора матрицы параметров $\thmat$ нестабильно. Определение устойчивости (стабильности) модели приведено в разделе <<Анализ ошибки>>.
+При наличии мультикоррелированных столбцов в матрице $\Xmat$, что вероятно, если пространство признаков имеет высокую размерность, решение задачи \eqref{eq::param_problem}
+выбора матрицы параметров $\Thmat$ нестабильно. Определение устойчивости (стабильности) модели приведено в разделе <<Анализ ошибки>>.
 
 \paragraph{Задача отбора признаков}
 
-Пусть $\featset = \{ 1, \dots, n \}$ --- множество индексов признаков,
-$\featsub \subseteq \featset$ --- его некоторое подмножество.
-Определим линейную модель $\fmodel$ на подмножестве признаков $\featsub$:
+Пусть $\fsset = \{ 1, \dots, n \}$ --- множество индексов признаков,
+$\fssub \subseteq \fsset$ --- его некоторое подмножество.
+Определим линейную модель $\fmodel$ на подмножестве признаков $\fssub$:
 
 \begin{equation}
 \label{eq:fs_model}
 \fmodel(
-\xobj_{\featsub},
-\thmat_{\featsub}) =
-\underset{r \times |\featsub|}{\thmat_{\featsub}\T}
-\underset{|\featsub| \times 1}{\xobj_{\featsub}}.
+\xobj_{\fssub},
+\Thmat_{\fssub}) =
+\underset{r \times |\fssub|}{\Thmat_{\fssub}\T}
+\underset{|\fssub| \times 1}{\xobj_{\fssub}}.
 \end{equation}
 
-Задача предсказания \eqref{eq::param_problem} состоит в определении матрицы параметров $\thmat \in \RR^{|\featsub| \times r}$ при заданном множестве $\featsub$ такой, что:
+Задача предсказания \eqref{eq::param_problem} состоит в определении матрицы параметров $\Thmat \in \RR^{|\fssub| \times r}$ при заданном множестве $\fssub$ такой, что:
 	
 \begin{equation}
 \label{eq::fs_param_problem}
-\thmat^* =
-\argmin_{\thmat  \in \RR^{|\featsub| \times r}}
-\serrf (\theta, \featsub | \sample, \fmodel).
+\Thmat^* =
+\argmin_{\Thmat  \in \RR^{|\fssub| \times r}}
+\serrf (\theta, \fssub | \sample, \fmodel).
 \end{equation}
 
-Для нахождения множества $\featsub$ решается задача отбора признаков:
+Для нахождения множества $\fssub$ решается задача отбора признаков:
 \begin{equation}
 \label{eq::fs_problem}
-\featsub^* =
-\argmin_{\featsub \in \featset} 
-\fscrit (\featsub | \xmat, \ymat), 
+\fssub^* =
+\argmin_{\fssub \in \fsset} 
+\fscrit (\fssub | \Xmat, \Ymat), 
 \end{equation}
-где $\fscrit : \featsub \to \RR$ ---  некоторый функционал, который определяет качество выбранного подмножества признаков $\featsub \subseteq \featset$.
+где $\fscrit : \fssub \to \RR$ ---  некоторый функционал, который определяет качество выбранного подмножества признаков $\fssub \subseteq \fsset$.
 
-Для решения этой задачи не обязательно требуется оценка оптимального вектора параметров $\thmat^*$.
-Она использует зависимости между векторами $\xfeat_j, j \in \featset$ и целевыми векторами $\yfeat_i, i \in \{1, \dots, r \}$.
+Для решения этой задачи не обязательно требуется оценка оптимального вектора параметров $\Thmat^*$.
+Она использует зависимости между векторами $\xfeat_j, j \in \fsset$ и целевыми векторами $\yfeat_i, i \in \{1, \dots, r \}$.
 
-Пусть $\featvec \in \BB^n = \{0, 1\}^n$ -- вектор принадлежности признаков подмножеству $\featsub$.
+Пусть $\fsvec \in \BB^n = \{0, 1\}^n$ -- вектор принадлежности признаков подмножеству $\fssub$.
 Задача $\eqref{eq::fs_problem}$ представлена в виде:
 \begin{equation}
 \label{eq::fs_vec_problem}
-\featvec^* = 
-\argmin_{\featvec \in \BB^n}
-\fscrit(\featsub | \xmat, \ymat), 
+\fsvec^* = 
+\argmin_{\fsvec \in \BB^n}
+\fscrit(\fsvec | \Xmat, \Ymat), 
 \end{equation}
-где $Q : \BB^n \to \RR$ -- критерий $Q$, определенный на $ \BB^n $;
-связь между вектором $\featvec^*$ и множеством $\featsub^*$ определяется как:
+где $\fscrit : \BB^n \to \RR$ -- критерий $\fscrit$, определенный на $ \BB^n $;
+связь между вектором $\fsvec^*$ и множеством $\fssub^*$ определяется как:
 \begin{equation}
 \label{eq::fs_index_correspondence}
-\featsub^* =
+\fssub^* =
 \{j:
-\featvec^*_j = 1,
-j \in \featset\}. 
+\fsvec^*_j = 1,
+j \in \fsset\}. 
 \end{equation}
 
 
 \section {Модели}
 
-В данной работе рассматриваются следующие линейные модели:
-\begin{enumerate}
-	\item Линейная регрессия.
-	\item PLS(Partial Least Squares Regression).
-\end{enumerate}
+В данной работе рассматриваются модели линейной регрессии и PLS (Partial Least Squares Regression).
 
 \paragraph{Линейная регрессия}
 
-Модель линейной регрессии является линейной моделью \label{eqref::linear_model}.
-Матрица параметров $\thmat \in \RR^{n \times r}$ подбирается таким образом, чтобы минимизировать квадратичную функцию ошибки $\serrf$ \eqref{eq::param_problem}:
+Модель линейной регрессии является линейной моделью \eqref{eq::linear_model}.
+Матрица параметров $\Thmat \in \RR^{n \times r}$ подбирается таким образом, чтобы минимизировать квадратичную функцию ошибки $\serrf$ \eqref{eq::param_problem}:
 \begin{equation}
 \label{eq::linreg_error}
 {\bigl\|
-\bF(\xmat, \thmat) -
-\ymat \bigr\|}_2^2
+\bF(\Xmat, \Thmat) -
+\Ymat \bigr\|}_2^2
 \rightarrow 
 \min_{
-\thmat \in \RR^{n \times r}}.
+\Thmat \in \RR^{n \times r}}.
 \end{equation}
 
 Решением оптимизационной задачи является:
 \begin{equation}
 \label{eq::linreg_solution}
-\thmat =  (\xmat\T \xmat) ^{-1} \xmat\T \ymat.
+\Thmat =  (\Xmat\T \Xmat) ^{-1} \Xmat\T \Ymat.
 \end{equation}
 
 
@@ -210,37 +207,51 @@ j \in \featset\}.
 
 \paragraph{PLS}
 
-Метод частных наименьших квадратов PLS рассматривает в качестве признаков линейные комбинации исходных. Предполагается, что существует скрытое пространство латентных переменных малой размерности $l$ ($l < n, r$). Происходит поиск матрицы $\bT \in \RR^{m \times l}$, которая наилучшим образом описывает матрицы $\xmat$ и $\ymat$.
+Метод частных наименьших квадратов PLS рассматривает в качестве признаков линейные комбинации исходных. Предполагается, что существует скрытое пространство латентных переменных малой размерности $l$ ($l < n, r$). Происходит поиск матрицы $\bT \in \RR^{m \times l}$, которая наилучшим образом описывает матрицы $\Xmat$ и $\Ymat$.
 
 \begin{align}
-\underset{m \times n}{\xmat} &= \underset{m \times l}{\bT\T} \cdot
+\underset{m \times n}{\Xmat} &= \underset{m \times l}{\bT\T} \cdot
 \underset{l \times n}{\bP\T} + \underset{m \times n}{\bE}
 \label{eq::PLS_X} \\
-\underset{m \times r}{\ymat} &= \underset{m \times l}{\bU\T} \cdot
+\underset{m \times r}{\Ymat} &= \underset{m \times l}{\bU\T} \cdot
 % \underset{l \times l}{\textrm{diag}(\bbeta)}\cdot
-\underset{l \times r}{\bQ\T} + \underset{m \times r}{\bF}
+\underset{l \times r}{\Qsim\T} + \underset{m \times r}{\bF}
 \label{eq::PLS_Y}
 \end{align}
 
 \section{Методы отбора признаков}
 
-Существуют различные методы отбора признаков. В данной работе используются:
-\begin{enumerate}
-	\item QPFS
-	\item Генетический алгоритм
-\end{enumerate}
-
-Приведем краткие описания используемых алгоритмов.
+В данной работе рассматриваются метод отбора признаков QPFS (Quadratic Programming Feature Selection) и генетический алгоритм.
 
 \paragraph{QPFS}
-\[
-\]
-Чтобы вычислить матрицу $\bQ$ и вектор $\bbb$
 
+Идея метода отбора признаков состоит в минимизации числа схожих признаков и максимизации числа признаков, информативных для задачи предсказания целевого вектора $\yfeat \in \RR^{m}$. Формализация постановки задачи состоит в ее определении как задачи \eqref{eq::fs_vec_problem} со следующим критерием $\fscrit$:
+\begin{equation}
+\label{eq::qpfs_crit}
+\fscrit(\fsvec | \Xmat, \yfeat) = 
+\fsvec\T \Qsim \fsvec - \brel \T \fsvec,
+\end{equation}
+где $\Qsim \in \RR^{m \times m}$ --- матрица попарного сходства признаков, $\brel \in \RR^m$ --- вектор релевантностей признаков целевому вектору.
+
+Для вычисления матрицы $\Qsim$ и вектора $\brel$ определяются следующие функции:
 \begin{align}
-\Sim & \label{eq::Sim} \\
-\Rel & \label{eq::Rel}
+\label{eq::Sim}  \Sim : \; & \fsset \times \fsset \to [0, 1]; \\
+\label{eq::Rel} \Rel: \;& \fsset \to [0, 1],
 \end{align}
+где функция $\Sim$ отражает похожесть между парой признаков, а функция $\Rel$ --- релевантность признака целевому вектору.
+
+Тогда матрица $\Qsim$ вычисляется с использованием функции $\Sim$:
+\begin{align}
+\label{eq::Qsim_compute}
+\Qsim = [\Qsimel_{ij}]
+= \Sim(\xfeat_i, \xfeat_j),
+\end{align}
+а вектор $\brel$ --- с использованием функции $\Rel$:
+\begin{align}
+\label{eq::brel_compute} \brel = [\brelel_{i}] = \Rel(\xfeat_i).
+\end{align}
+
+Функции $\Sim$, $\Rel$ выбираются в соответствии с решаемой задачей
 
 Коэффициент корреляции Пирсона определяется как:
 
@@ -293,13 +304,13 @@ $$\rho_{ij} =\frac{
 Введем некоторые обозначения.
 
 Напомним, 
-$\featsub \subseteq \featset$ --- некоторое подмножество множества признаков.
+$\fssub \subseteq \fsset$ --- некоторое подмножество множества признаков.
 
-$\thmat^* = \argmin_{\thmat  \in \RR^{|\featsub| \times r}}   S(\theta, \featsub | \mathfrak{D}, \fmodel) $ 
+$\Thmat^* = \argmin_{\Thmat  \in \RR^{|\fssub| \times r}}   S(\theta, \fssub | \mathfrak{D}, \fmodel) $ 
 - предсказанные линейной моделью коэффициенты.
 
 Пусть
-$\hat{y}  = X\thmat \in R^{m \times r}$ - предсказания линейной модели.
+$\hat{y}  = X\Thmat \in R^{m \times r}$ - предсказания линейной модели.
 
 $\epsilon = y - \hat{y}$ - ошибка предсказания
 
@@ -328,12 +339,12 @@ $M$ - множество метрик качества модели (см. ниже в секции Метрики качества)
 
 Характеристикой является сложность
 
-Пусть имеются истинный прогноз $\ymat = (\yobj_1, \yobj_2, \dots, \yobj_m)$ и предсказание $\mathbf{\hat{Y}} = (\mathbf{\hat{y}}_1, \mathbf{\hat{y}}_2, \dots, \mathbf{\hat{y}}_m)$; $\yobj_i$ и $\mathbf{\hat{y}}_i$, $i = 1, 2, \dots, m$ -- вектора размерности $r$.
+Пусть имеются истинный прогноз $\Ymat = (\yobj_1, \yobj_2, \dots, \yobj_m)$ и предсказание $\mathbf{\hat{Y}} = (\mathbf{\hat{y}}_1, \mathbf{\hat{y}}_2, \dots, \mathbf{\hat{y}}_m)$; $\yobj_i$ и $\mathbf{\hat{y}}_i$, $i = 1, 2, \dots, m$ -- вектора размерности $r$.
 
 Среднеквадратичная  ошибка (mean squared error):
 
 \begin{equation}
-\text{MSE}(\ymat, \mathbf{\hat{Y}}) =
+\text{MSE}(\Ymat, \mathbf{\hat{Y}}) =
 \frac{1}{m}
 \sum^m_{i=1}
 {\bigl\| \mathbf{y}_i - \mathbf{\hat{y}}_i \bigr\| }_2^2 
@@ -343,15 +354,15 @@ $M$ - множество метрик качества модели (см. ниже в секции Метрики качества)
 Корень среднеквадратичной ошибки (root-mean-squared error):
 
 \begin{equation}
-\text{RMSE}(\ymat, \mathbf{\hat{Y}}) =
-\sqrt{\text{MSE}(\ymat, \mathbf{\hat{Y}})}
+\text{RMSE}(\Ymat, \mathbf{\hat{Y}}) =
+\sqrt{\text{MSE}(\Ymat, \mathbf{\hat{Y}})}
 \label{eq::error_rmse}
 \end{equation}
 
 Нормированная среднеквадратичная ошибка (scaled mean squared error):
 
 \begin{equation}
-\text{sMSE}(\ymat, \mathbf{\hat{Y}}) =
+\text{sMSE}(\Ymat, \mathbf{\hat{Y}}) =
 \frac{
 	\sum^m_{i=1}
 	{\bigl\| \mathbf{y}_i - \mathbf{\hat{y}}_i \bigr\| }_2^2 
@@ -367,15 +378,15 @@ $M$ - множество метрик качества модели (см. ниже в секции Метрики качества)
 Предположим, что приз
 
 
-Число обусловленности матрицы $\xmat\T
-\xmat$ 
+Число обусловленности матрицы $\Xmat\T
+\Xmat$ 
 
 
 \begin{equation}
 \kappa =  \frac{\lambda_{\textrm{max}}}{\lambda_{\textrm{min}}}
 \end{equation}
 
-Рассматриваются числа обусловленности для $\xmat\T \xmat$, $\widehat{\ymat}\T \widehat{\ymat}$. В случае применения модели PLS, будут рассматриваться также числа обусловленности $\bT\T \bT$
+Рассматриваются числа обусловленности для $\Xmat\T \Xmat$, $\widehat{\Ymat}\T \widehat{\Ymat}$. В случае применения модели PLS, будут рассматриваться также числа обусловленности $\bT\T \bT$
 
 
 MAE, MADE, Коэффициент корреляции. Различные параметры модели из \cite{Katrutsa17QPFS}.
