@@ -24,8 +24,6 @@
 \newcommand{\Rel}{\myop{Rel}}
 \newcommand{\Qsim}{\mathbf{Q}}
 \newcommand{\brel}{\mathbf{b}}
-\newcommand{\Qsimel}{q}
-\newcommand{\brelel}{b}
 
 \newcommand{\bbeta}{\boldsymbol{\beta}}
 \newcommand{\bw}{\mathbf{w}}
@@ -238,29 +236,69 @@ j \in \fsset\}.
 \label{eq::Sim}  \Sim : \; & \fsset \times \fsset \to [0, 1]; \\
 \label{eq::Rel} \Rel: \;& \fsset \to [0, 1],
 \end{align}
-где функция $\Sim$ отражает похожесть между парой признаков, а функция $\Rel$ --- релевантность признака целевому вектору.
+где функция $\Sim$ отражает схожесть между парой признаков, а функция $\Rel$ --- релевантность признака целевому вектору.
 
 Тогда матрица $\Qsim$ вычисляется с использованием функции $\Sim$:
 \begin{align}
 \label{eq::Qsim_compute}
-\Qsim = [\Qsimel_{ij}]
+\Qsim = [q_{ij}]
 = \Sim(\xfeat_i, \xfeat_j),
 \end{align}
 а вектор $\brel$ --- с использованием функции $\Rel$:
 \begin{align}
-\label{eq::brel_compute} \brel = [\brelel_{i}] = \Rel(\xfeat_i).
+\label{eq::brel_compute} \brel = [b_{i}] = \Rel(\xfeat_i).
 \end{align}
 
-Функции $\Sim$, $\Rel$ выбираются в соответствии с решаемой задачей
+Функции $\Sim$, $\Rel$ выбираются в соответствии с решаемой задачей. Далее рассматриваются некоторые примеры таких функций.
 
-Коэффициент корреляции Пирсона определяется как:
+Схожесть между парой признаков можно вычислить, используя коэффициент корреляции Пирсона для случайных величин $\xfeat_i$, $\xfeat_j$:
 
-$$\rho_{ij} =\frac{
-	\cov(\xobj_i, \xobj_j)
+\begin{equation}
+\label{eq::pearson_corr}
+\rho_{ij} =\frac{
+	\cov(\xfeat_i, \xfeat_j)
 }{
-	\sqrt{\var(\xobj_i) \cdot \var(\xobj_j)}
-} $$
+	\sqrt{\var(\xfeat_i) \cdot \var(\xfeat_j)}
+},
+\end{equation}
+где $\cov$ --- ковариация случайных величин, $\var$ --- вариация случайной величины.
 
+Пусть $\overline{\xfeat}_i = [\overline{\chi}_i  \dots \overline{\chi}_i] \in \RR^m$ --- вектор, значения элементов которому равны среднему $\overline{\chi}_i$ вектора $\xfeat_i$. Выборочный коэффициент корреляции Пирсона для векторов $\xfeat_i$, $\xfeat_j$ определяется как:
+\begin{equation}
+\label{eq::pearson_sample_corr}
+\hat{\rho}_{ij} =\frac{
+	(\xfeat_i - \overline{\xfeat}_i)\T (\xfeat_j - \overline{\xfeat}_j)
+}{
+	\lVert \xfeat_i  - \overline{\xfeat}_i \rVert_2
+	\lVert \xfeat_j  - \overline{\xfeat}_j \rVert_2}
+\end{equation}
+Полагая $\xfeat_y = \yfeat$, можно аналогичным образом вычислить выборочный коэффициент корреляции Пирсона $\hat{\rho}_{iy}$ для вектора $\xfeat_i$ значений признака и целевого вектора $\yfeat$, чтобы измерить релевантность $i$-го признака целевому вектору.
+
+Таким образом, элементы матрицы $\Qsim = [q_{ij}]$ и вектора $\brel = [b_{i}]$ вычисляются как:
+\begin{align}
+\label{eq::Qsim_pearson_corr}
+	q_{ij} & = \Sim(\xfeat_i, \xfeat_j) = |\hat{\rho}_{ij}|; \\ 
+\label{eq::brel_pearson_corr}
+	b_i & = \Rel(\xfeat_i) = |\hat{\rho}_{iy}|.
+\end{align}
+
+Пусть $p(\xfeat_i)$ --- плотность случайной величины $\xfeat_i$,  $p(\xfeat_i, \xfeat_j)$ --- совместная плотность случайных величин $\xfeat_i$ и $ \xfeat_j$.
+Для измерения нелинейной зависимости между случайными величинами $\xfeat_i$ и $\xfeat_j$ применяется взаимная информация:
+\begin{equation}
+	I(\xfeat_i, \xfeat_j) = \int \int p(\xfeat_i, \xfeat_j)
+	\log \frac{p(\xfeat_i, \xfeat_j)}{p(\xfeat_i) p(\xfeat_j)}
+	d\xfeat_i d\xfeat_j.
+\end{equation}
+
+Выборочная взаимная информация $\hat{I}(\xfeat_i, \xfeat_j)$ вычисляется на основе оценок соответствующих плотностей распределений.
+
+Тогда элементы матрицы $\Qsim = [q_{ij}]$ и вектора $\brel = [b_{i}]$ вычисляются как:
+\begin{align}
+\label{eq::Qsim_mutual_info}
+q_{ij} & = \Sim(\xfeat_i, \xfeat_j) = \hat{I}(\xfeat_i, \xfeat_j); \\ 
+\label{eq::brel_mutual_info}
+b_i & = \Rel(\xfeat_i) = \hat{I}(\xfeat_i, \yfeat).
+\end{align}
 
 \paragraph{Генетический алгоритм}
 \[
