@@ -1,7 +1,5 @@
 from metrics import *
 
-print(condition_number_xtx)
-
 class FunctionEvaluator():
     def __init__(self, func=None):
         if func == None:
@@ -87,7 +85,6 @@ class Condition_Number(Characteristic):
         return "Cond number"
 
 
-# In[ ]:
 
 
 
