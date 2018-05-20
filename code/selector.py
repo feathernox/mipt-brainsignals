@@ -1,5 +1,3 @@
-
-
 class Selector():
     '''Wrapper over a selection algorithm'''
     def __init__(self, algo, name=None):

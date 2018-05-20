@@ -1,7 +1,6 @@
 
-# coding: utf-8
-
-# In[ ]:
+from model_quality import *
+from selector import *
 
 class ModelComparison:
     '''Compares several pairs [selection_algorithm x model]'''
@@ -94,7 +93,7 @@ class ModelComparison:
             if len_sample is None:
                 len_sample = self.X_test.shape[0]
             self.boot = Bootstrap(self.X_test, self.y_test, n_samples, len_sample)
-        else if mode == 'dynamic':
+        elif mode == 'dynamic':
             all_names = [str(el) for el in metrics] + [str(el) for el in comparisons] + [str(el) for el in characteristics]
             if len_sample is None:
                 len_sample = self.X_train.shape[0]
@@ -127,6 +126,8 @@ class ModelComparison:
                 value = self.model_quality[i].mean[index]
             elif what == 'KL':
                 value = self.model_quality[i].calculateKL(name)
+            elif what == 'rel':
+                value = self.model_quality[i].std[index] / self.model_quality[i].mean[index] 
             else:
                 raise ValueError("Got unexpected value %s " % what)
             plt.plot(self.ns_features, value, label = str(self.pairs[i][0]) + ';' + str(self.pairs[i][1])[:10])
@@ -144,7 +145,7 @@ class ModelComparison:
         indices: array-like
                  Indices of pairs (algo, model) to consider
         what :   string
-                 'quality', 'mean', 'std', 'KL'
+                 'quality', 'mean', 'std', 'KL', 'rel'
         
         '''
         if names is None:
@@ -167,6 +168,8 @@ class ModelComparison:
         '''Draws graphics for several metric names'''
         self.draw(names, indices, "KL")
         
+    def draw_relative_std(self, names=None, indices=None):
+        self.draw(names, indices, "rel")
 
 
 # In[ ]:
