@@ -32,10 +32,13 @@ class EvaluateInfo():
         '''
         Calculates the value of all metrics on test sample
         '''
+        #print(self.X_train.shape, self.y_train.shape, self.X_test.shape, self.y_test.shape)
+        #print(self.masks.shape)
         
         model = self.model
         for (m, mask) in enumerate(self.masks):
             reduced_X_test = self.X_test[:, mask]
+            #print(self.X_train.T[mask].T.shape, self.y_train.shape)
             model.fit(self.X_train.T[mask].T, self.y_train)
             for (i, metric) in enumerate(self.metrics):
                 self.quality[i][m] = metric.evaluate(model, reduced_X_test, self.y_test)
@@ -48,7 +51,7 @@ class EvaluateInfo():
                 ind = i + len(self.metrics) + len(self.comparisons)
                 self.quality[ind][m] = char.evaluate(model)
         
-    def fit(self, X_train, y_train, X_test, y_test, masks = None, n_samples=20, len_sample=None):
+    def fit(self, X_train, y_train, X_test, y_test, masks = None, n_samples=20, len_sample=None, boot=None):
         '''
         X_train - train features. 2D numpy array or list
         
@@ -147,7 +150,10 @@ class EvaluateStaticInfo(EvaluateInfo):
         '''
         model = self.model
         
+        
         sample_X, sample_y = self.boot.values()
+        
+        #print(sample_X.shape, sample_y.shape)
         
         self.models = []
         for mask in self.masks:
@@ -163,12 +169,15 @@ class EvaluateStaticInfo(EvaluateInfo):
                     self.result[ind][m][it] = comp.evaluate(self.full, self.models[m], sample_X[it], 
                                                               reduced_X_cur, sample_y[it])
 
-    def fit(self, X_train, y_train, X_test, y_test, masks = None, n_samples=20, len_sample=None):
+    def fit(self, X_train, y_train, X_test, y_test, masks = None, n_samples=20, len_sample=None, boot=None):
         '''See EvaluateInfo - fit'''
         super(EvaluateStaticInfo, self).fit(X_train, y_train, X_test, y_test, masks, n_samples, len_sample)
         if self.len_sample is None:
             self.len_sample = len(X_test)
-        self.boot = Bootstrap(self.X_test, self.y_test, self.n_samples, self.len_sample)
+        if boot is None:
+            self.boot = Bootstrap(self.X_test, self.y_test, self.n_samples, self.len_sample)
+        else:
+            self.boot = boot
         self.__eval()
         
 
@@ -211,12 +220,15 @@ class EvaluateDynamicInfo(EvaluateInfo):
                 
                 
 
-    def fit(self, X_train, y_train, X_test, y_test, masks = None, n_samples=20, len_sample=None):
+    def fit(self, X_train, y_train, X_test, y_test, masks = None, n_samples=20, len_sample=None, boot=None):
         '''See EvaluateInfo - fit'''
         super(EvaluateDynamicInfo, self).fit(X_train, y_train, X_test, y_test, masks, n_samples, len_sample)
         if self.len_sample is None:
-            self.len_sample = len(X_test)
-        self.boot = Bootstrap(self.X_test, self.y_test, self.n_samples, self.len_sample)
+            self.len_sample = len(X_train)
+        if boot is None:
+            self.boot = Bootstrap(self.X_train, self.y_train, self.n_samples, self.len_sample)
+        else:
+            self.boot = boot
         self.__eval()
     
 

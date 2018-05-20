@@ -8,6 +8,22 @@ from evaluate_info import *
 import matplotlib.pyplot as plt
 get_ipython().magic('matplotlib inline')
 
+def plot_graphics(names, ns_features, func, params=None):
+    rows = (len(names)+2) // 2
+    plt.figure(figsize=(20, 6 * rows))
+    for i in range(len(names)):
+        plt.subplot(rows, 2, i+1)
+        plt.scatter(ns_features, np.zeros_like(ns_features), label='used n', alpha=0.3, color='red')
+        name = names[i]
+        if params is None:
+            func(name)
+        else:
+            func(name, params)
+        plt.legend()
+        plt.title(name)
+        plt.xlabel('n')
+    plt.show()
+        
 
 class ModelQuality():
     '''
@@ -26,16 +42,31 @@ class ModelQuality():
     def fit(self, X, y, ns_features=None, test_size=0.3, X_test=None, y_test=None):
         '''
         Fits the object to the data
-        X - features
-        y - answers
-        
-        ns_features - desired numbers of features. List of numpy array.
-        If None, all numbers of features from 1 to max possible will be used.
-        
-        test_size - desired size of test sample in test_train_split if it is used. Default is 0.3
-        
-        X_test, y_test - test features and answers in case test_train_split is not used.
-        If X_test is not None, test_size is ignored. Default is None.
+        Parameters
+        ----------
+        X :           array-like, shape = [n_samples, n_features]
+                      Training vectors, where n_samples is the number of samples and
+                      n_features is the number of predictors.
+        y :           array-like, shape = [n_samples, n_targets]
+                      Target vectors, where n_samples is the number of samples and
+                      n_targets is the number of response variables.
+        ns_features : array-like, 1D. Each element is desired number of features to consider.
+                      Default is None.
+                      If None, all numbers from 1 to n_features will be considered.
+        test_size :   float
+                      size of test sample in case test data is generated using test_train_split. 
+                      Default is 0.3.
+                      If X_test is not None, test_size is ignored
+        X_test :      array-like, shape = [n_samples, n_features] or None
+                      Test features, where n_samples is the number of samples and
+                      n_features is the number of predictors.
+                      Default is None.
+                      If None, test_train_split is used to generate test sample.
+        y_test :      array-like, shape = [n_samples, n_targets] or None
+                      Test target vectors, where n_samples is the number of samples and
+                      n_targets is the number of response variables.
+                      Default is None.
+                      If None, test_train_split is used to generate test sample.
         '''
 
         if X_test is None:
@@ -52,6 +83,7 @@ class ModelQuality():
         self.X_test = np.array(self.X_test)
         self.y_test = np.array(self.y_test)
         
+        
         if ns_features is None:
             self.ns_features = np.arange(self.X_train.shape[1]) + 1
             #print(ns_features)
@@ -64,7 +96,7 @@ class ModelQuality():
         self.selector.fit(self.X_train, self.y_train)
         for (i, num) in enumerate(self.ns_features):
             cur_features = self.selector.select(num)
-            self.masks[i][cur_features] = True
+            self.masks[i][cur_features] = True 
             
     def _calc_mean_and_std(self):
         '''Calculates the mean and std of result'''
@@ -73,22 +105,30 @@ class ModelQuality():
         self.std = np.std(self.result, axis=-1)
 
     def evaluate(self, metrics = [], comparisons = [], characteristics = [], n_samples=20, 
-                 len_sample = None, mode='static'):
+                 len_sample = None, mode='static', boot=None):
         '''
         Evaluates the metric values and bootstrap distributions.
         
-        metrics - desired metrics are objects of class Metric or with the same interface(see Metric)
-        comparisons - desired comparisons are objects of class Comparison or with the same interface(see Comparison)
-        characteristics - desired characteristics are objects of class Сharacteristic
-        or with the same interface(see Characteristic)
+        metrics :         array-like, element type = Metric or similar
+                          Desired metrics (see Metric)
+        comparisons :     array-like, element type = Comparison or similar
+                          Desired comparison (see Comparison)
+        characteristics : array-like, element type = Characteristic or similar
+                          Desired characteristics (see Characteristic)
         
-        n_samples - number of bootstrap samples to generate. Default is 20.
+        n_samples :       int
+                          Number of bootstrap samples to generate. Default is 20.
         
-        len_sample - length of each bootstrap sample
-        If None, it will be equal to the number of features.
+        len_sample :      int or None
+                          Length of each bootstrap sample
+                          If None, it will be equal to the number of features.
         
-        mode - string. 'static' or 'dynamic'. The type of EvaluateInfo object. 
-        (See StaticEvaluateInfo/DynamicEvaluateInfo)
+        mode :            string
+                          'static' or 'dynamic'. Default is 'static'
+                          The type of EvaluateInfo object. 
+                          (See StaticEvaluateInfo/DynamicEvaluateInfo)
+        boot:             Bootstrap or None
+                          Desired bootstrap sample. If is not None, n_samples and len_sample are ignored.
         
         '''
         
@@ -99,7 +139,7 @@ class ModelQuality():
         #print(self.evaluate_info)
         self.n_samples = n_samples
         self.len_sample = len_sample
-        self.evaluate_info.fit(self.X_train, self.y_train, self.X_test, self.y_test, self.masks, n_samples, len_sample)
+        self.evaluate_info.fit(self.X_train, self.y_train, self.X_test, self.y_test, self.masks, n_samples, len_sample, boot=boot)
         self.result = self.evaluate_info.get_result()
         self.quality = self.evaluate_info.get_quality()
         self._calc_mean_and_std()
@@ -109,17 +149,7 @@ class ModelQuality():
         
         if names is None:
             names = list(self.evaluate_info.names.keys())
-        rows = (len(names)+2) // 2
-        plt.figure(figsize=(20, 6 * rows))
-        for i in range(len(names)):
-            plt.subplot(rows, 2, i+1)
-            plt.scatter(self.ns_features, np.zeros_like(self.ns_features), label='used n', alpha=0.3, color='red')
-            name = names[i]
-            func(name)
-            plt.legend()
-            plt.title(name)
-            plt.xlabel('n')
-        plt.show()
+        plot_graphics(names, self.ns_features, func)
         
     def _get_index_by_name(self, name):
         '''Returns the index corresponding to the name of a metric'''
@@ -228,18 +258,22 @@ class ModelQuality():
             return 0
         return np.log(s2/s1) + (s1**2 + (a1 - a2)**2) / (2 * s2**2) - 1/2
     
-    def _draw_KL_one(self, name):
-        '''
-        Draws sum for metric with name "name", where sum is an accumulated sum of KL divergence between the 
-        distribution of values for n_features = i and distribution of values for n_features = i + 1 assuming that both
-        distributions are normal (parameters of the distribution are replaced by their estimates).
-        '''
+    def calculateKL(self, name):
         index = self._get_index_by_name(name)
         KL = np.zeros(len(self.ns_features))
         for i in range(1, len(self.ns_features)):
             diff = self._kullback_leibler(self.mean[index][i-1], self.std[index][i-1], 
                                           self.mean[index][i], self.std[index][i])
             KL[i] = KL[i-1] + diff
+        return KL
+    
+    def _draw_KL_one(self, name):
+        '''
+        Draws sum for metric with name "name", where sum is an accumulated sum of KL divergence between the 
+        distribution of values for n_features = i and distribution of values for n_features = i + 1 assuming that both
+        distributions are normal (parameters of the distribution are replaced by their estimates).
+        '''
+        KL = self.calcualteKL(name)
         plt.plot(self.ns_features, KL, label='accumulated KL divergence')
         plt.ylabel('KL')
         
