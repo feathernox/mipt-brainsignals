@@ -17,7 +17,7 @@ def bootstrap(X, Y,
 
     Parameters
     ----------
-    X : array-like or sparse matrix, shape = [n_samples, n_features]
+    X : array-like, shape = [n_samples], [n_samples, n_features]
         Training vectors, where n_samples is the number of samples and
         n_features is the number of predictors.
 
@@ -51,9 +51,11 @@ def bootstrap(X, Y,
 
     if dataset_n_samples is None:
         dataset_n_samples = X.shape[0]
+
+    n_samples = X.shape[0]
     indices = random_state.choice(n_samples,
         (n_datasets, dataset_n_samples), replace=True)
 
-    sample_X = X[indices, :]
-    sample_Y = Y[indices, :]
-    return sample_X, sample_Y
+    X_sample = X[indices, :]
+    Y_sample = Y[indices, :]
+    return X_sample, Y_sample
