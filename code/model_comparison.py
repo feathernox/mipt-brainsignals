@@ -92,12 +92,12 @@ class ModelComparison:
             all_names = [str(el) for el in metrics] + [str(el) for el in comparisons]
             if len_sample is None:
                 len_sample = self.X_test.shape[0]
-            self.boot = Bootstrap(self.X_test, self.y_test, n_samples, len_sample)
+            self.boot = None
         elif mode == 'dynamic':
             all_names = [str(el) for el in metrics] + [str(el) for el in comparisons] + [str(el) for el in characteristics]
             if len_sample is None:
                 len_sample = self.X_train.shape[0]
-            self.boot = Bootstrap(self.X_train, self.y_train, n_samples, len_sample)
+            self.boot = None
         else:
             raise ValueError("Got unexpected mode %s " % mode)
 

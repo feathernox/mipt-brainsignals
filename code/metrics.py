@@ -1,159 +1,125 @@
 import numpy as np
 
-
-def _check_features_mask(a):
-    """Check that a is mask suitable for feature selection
-    and transforms it to 1d boolean array.
-
-    Args:
-        a: 1d array containing zeros and ones.
-            Its length corresponds to number of features;
-            `1` on i-th position indicates selection of i-th feature,
-            `0` -- its abundance.
-    Returns:
-        a: 1d boolean numpy array.
-    Raises:
-        ValueError:
-            If `a` cannot be transformed to array, its dimensionality is not 1
-            or it contains not only zeros and ones.
-    """
-    a = np.array(a)
-
-    if a.ndim != 1:
-        raise ValueError("Dimension of array is {0}"
-                         "instead of 1.".format(a.ndim))
-
-    if not np.array_equal(a, a.astype(bool)):
-        raise ValueError("Not all array elements are 0 or 1.")
-
-    return a.astype(bool)
-
-
-def _num_samples(X):
-    """
-
-    Args:
-        X a
-    Returns:
-        n -- number od
-    """
-    X = np.array(X)
-    if X.ndim == 0:
-        raise
-    n = X.shape[0]
-
-
-def _check_consistent_num_samples(*arrays):
-    """Check that all arrays have the same number of samples.
-
-    Args:
-        *arrays
-    Raises:
-        ValueError:
-    """
-    nums_samples = [_num_samples(X) for X in arrays]
-    if len(np.unique(nums_samples)) > 1:
-        raise
-
-
-def _check_array(Y):
-    """Check that Y is array suitable for regression task
-    and transforms it to 2d float array.
-
-    It should be possible to transform Y to 2d array
-
-    Args:
-        Y
-    Returns:
-    Raises:
-    :param Y: array-like of shape = (n_samples) or (n_samples, n_outputs)
-    :return: Y
-    """
-    Y = np.array(Y)
-
-    if Y.ndim == 1:
-        Y = Y.reshape((-1, 1))
-
-    return Y
-
-
-def _check_regression_answers(Y_true, Y_pred):
-    """
-
-    :param Y_true:
-    :param Y_pred:
-    :return:
-    """
-    if Y_true.ndim == 1:
-        Y_true = Y_true.reshape((-1, 1))
-
-    if Y_pred.ndim == 1:
-        Y_pred = Y_pred.reshape((-1, 1))
-
-    return Y_true, Y_pred
+from utils import check_2d_array
+from utils import check_features_mask
+from utils import check_regression_answers
 
 
 def residual_square_sum(Y_true, Y_pred):
-    """Computes
-    RSS = (Y_true - Y_pred)^2
+    """Residual square sum regression score function.
 
-    :param Y_true:
-    :param Y_pred:
-    :return:
+    Parameters
+    ----------
+    Y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    Y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+
+    Returns
+    -------
+    score : float
+        Residual sum of squares.
+        A non-negative floating point value (the best value is 0.0).
     """
-    Y_true, Y_pred = _check_regression_answers(Y_true, Y_pred)
+    Y_true, Y_pred = check_regression_answers(Y_true, Y_pred)
 
     score = ((Y_true - Y_pred) ** 2).sum()
-
     return score
+
 
 def total_square_sum(Y_true):
-    """
+    """Total square sum score regression score function.
+    Defined as sum, over all observations, of the squared differences of each
+    observation from the overall mean.
 
-    :param Y_true:
-    :return:
+    Parameters
+    ----------
+    Y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    Returns
+    -------
+    score : float
+        Total sum of squares. A non-negative floating point value.
     """
-    Y_true = _check_array(Y_true)
+    Y_true = check_2d_array(Y_true)
 
     score = ((Y_true - Y_true.mean()) ** 2).sum()
-
     return score
 
 
-def determination_coefficient(Y_true, Y_pred, adjusted=True):
+def determination_coefficient(Y_true, Y_pred, adjusted=False):
+    """Coefficient of determination (R^2) regression score function.
+    Computed as 1 - RSS / TSS, where RSS is residual square sum
+    and TSS is total square sum.
+
+    The adjusted coefficient of determination considers adding
+    redundant features and is defined as
+    R^2 = 1 - (RSS / (n_samples - n_outputs)) / (TSS / (n_samples - 1)).
+
+    Best possible score is 1.0 and it can be negative (because the
+    model can be arbitrarily worse). A constant model that always
+    predicts the expected value of y, disregarding the input features,
+    would get a R^2 score of 0.0.
+
+    Parameters
+    ----------
+    Y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Ground truth (correct) target values.
+
+    Y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Estimated target values.
+
+    adjusted : boolean, optional (default=False)
+        Whether to compute R^2 or adjusted R^2.
+
+    Returns
+    -------
+    score : float
+        Coefficient of determination score.
     """
-    Closer R^2_adj to 1, better
-    :param Y_true:
-    :param Y_pred:
-    :param adjusted:
-    :return:
-    """
+    Y_true, Y_pred = check_regression_answers(Y_true, Y_pred)
+
     rss = residual_square_sum(Y_true, Y_pred)
     tss = total_square_sum(Y_true)
-    #print("RSS", "TSS", rss, tss)
     if adjusted:
-        # check Y_pred is 2d
         m, k = Y_true.shape
-        #print("M", "K", m, k)
         score = 1 - (rss / tss) * ((m - k) / (m - 1))
     else:
         score = 1 - rss / tss
-    #print(score)
     return score
 
 
 def variance_inflation_factor(Y_true, Y_pred):
-    """Calculates variance inflation factor:
-    VIF = 1 / (1 - R^2)
+    """Variance inflation factor regression score function.
+    Defined as the ratio of variance in a model with multiple terms,
+    divided by the variance of a model with one term alone.
+    Computed as VIF = 1 / (1 - R^2), where R^2 is coefficient
+    of determination.
 
-    :param Y_true:
-    :param Y_pred:
-    :return:
+    Used for severity of multicollinearity in an ordinary least squares
+    regression analysis. Y_pred should be computed using linear regression with
+    all features except one. Then large values of VIF (by rule of thumb,
+    VIF > 5), indicate collinearity of abandoned feature with others.
+
+    Parameters
+    ----------
+    Y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Ground truth (correct) target values.
+
+    Y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Estimated target values.
+
+    Returns
+    -------
+    score : float
+        Coefficient of determination score.
     """
+    Y_true, Y_pred = check_regression_answers(Y_true, Y_pred)
 
     r2 = determination_coefficient(Y_true, Y_pred)
     score = 1 / (1 - r2)
-
     return score
 
 
@@ -166,6 +132,8 @@ def mallows_Cp(Y_true, Y_pred, Y_pred_p, p):
     :param p:
     :return:
     """
+    Y_true, Y_pred = check_regression_answers(Y_true, Y_pred)
+    Y_true, Y_pred_p = check_regression_answers(Y_true, Y_pred_p)
     m = Y_true.shape[0]
 
     # check that p is int or bool array
@@ -199,7 +167,7 @@ def condition_number_xtx(X):
     :param X:
     :return:
     """
-    X = _check_array(X)
+    X = check_2d_array(X)
 
     eigenvalues = (np.linalg.svd(X)[1]) ** 2
     eigenvalues = eigenvalues[np.nonzero(eigenvalues)]

@@ -12,7 +12,7 @@ def bootstrap(X, Y,
     """Performs bootstrap procedure:
     using original training and target matrices, returns `n_datasets`
     pairs of new training and target matrices, which have
-    `len_sample` rows of corresponding features from training matrix and
+    `n_samples` rows of corresponding features from training matrix and
     outputs from target matrix, numbers of rows are chosen randomly.
 
     Parameters
@@ -45,7 +45,6 @@ def bootstrap(X, Y,
     sample_Y : array of shape = [n_datasets, n_samples, n_outputs]
         `n_datasets` bootstrapped target matrices.
     """
-    X, Y = check_X_Y(X, Y)
     random_state = check_random_state(random_state)
     dataset_n_samples = n_samples
 

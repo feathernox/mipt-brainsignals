@@ -51,7 +51,10 @@ class EvaluateInfo():
                 ind = i + len(self.metrics) + len(self.comparisons)
                 self.quality[ind][m] = char.evaluate(model)
         
-    def fit(self, X_train, y_train, X_test, y_test, masks = None, n_samples=20, len_sample=None, boot=None):
+    def fit(self, X_train, y_train, X_test, y_test,
+            masks=None, n_samples=20, len_sample=None,
+            random_state=None,
+            boot=None):
         '''
         X_train - train features. 2D numpy array or list
         
@@ -69,6 +72,9 @@ class EvaluateInfo():
         
         len_sample - length of each bootstrap sample
         If None, it will be equal to the number of features.
+
+        random_state  -
+        boot - bootstrapped sample
         '''
         
         self.len_sample = len_sample
@@ -80,7 +86,8 @@ class EvaluateInfo():
 
         self.X_test = np.array(X_test)
         self.y_test = np.array(y_test)
-        
+        self.random_state = random_state
+        self.boot = boot
         if masks is None:
             masks = np.ones((1, self.X_train.shape[1]), dtype=bool)
         
@@ -149,11 +156,13 @@ class EvaluateStaticInfo(EvaluateInfo):
         Computes the bootstrap result
         '''
         model = self.model
-        
-        
-        sample_X, sample_y = self.boot.values()
-        
-        #print(sample_X.shape, sample_y.shape)
+
+        if self.boot is None:
+            sample_X, sample_y = bootstrap(
+                self.X_test, self.y_test,
+                      self.n_samples, self.len_sample,
+                      self.random_state)
+
         
         self.models = []
         for mask in self.masks:
@@ -169,15 +178,13 @@ class EvaluateStaticInfo(EvaluateInfo):
                     self.result[ind][m][it] = comp.evaluate(self.full, self.models[m], sample_X[it], 
                                                               reduced_X_cur, sample_y[it])
 
-    def fit(self, X_train, y_train, X_test, y_test, masks = None, n_samples=20, len_sample=None, boot=None):
+    def fit(self, X_train, y_train, X_test, y_test, masks = None,
+            n_samples=20, len_sample=None, random_state=None, boot=None):
         '''See EvaluateInfo - fit'''
-        super(EvaluateStaticInfo, self).fit(X_train, y_train, X_test, y_test, masks, n_samples, len_sample)
+        super(EvaluateStaticInfo, self).fit(X_train, y_train, X_test, y_test,
+                                masks, n_samples, len_sample, random_state, boot)
         if self.len_sample is None:
             self.len_sample = len(X_test)
-        if boot is None:
-            self.boot = Bootstrap(self.X_test, self.y_test, self.n_samples, self.len_sample)
-        else:
-            self.boot = boot
         self.__eval()
         
 
@@ -196,8 +203,12 @@ class EvaluateDynamicInfo(EvaluateInfo):
         '''
         
         model = self.model
-        
-        sample_X, sample_y = self.boot.values()
+
+        if self.boot is None:
+            sample_X, sample_y = bootstrap(
+                self.X_train, self.y_train,
+                      self.n_samples, self.len_sample,
+                      self.random_state)
             
         for (m, mask) in enumerate(self.masks):
             reduced_X_test = (self.X_test.T[mask]).T
@@ -220,15 +231,13 @@ class EvaluateDynamicInfo(EvaluateInfo):
                 
                 
 
-    def fit(self, X_train, y_train, X_test, y_test, masks = None, n_samples=20, len_sample=None, boot=None):
+    def fit(self, X_train, y_train, X_test, y_test, masks = None,
+            n_samples=20, len_sample=None, random_state=None, boot=None):
         '''See EvaluateInfo - fit'''
-        super(EvaluateDynamicInfo, self).fit(X_train, y_train, X_test, y_test, masks, n_samples, len_sample)
+        super(EvaluateDynamicInfo, self).fit(X_train, y_train, X_test, y_test,
+                masks, n_samples, len_sample, random_state, boot)
         if self.len_sample is None:
             self.len_sample = len(X_train)
-        if boot is None:
-            self.boot = Bootstrap(self.X_train, self.y_train, self.n_samples, self.len_sample)
-        else:
-            self.boot = boot
         self.__eval()
     
 

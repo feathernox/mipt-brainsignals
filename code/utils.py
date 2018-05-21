@@ -2,6 +2,29 @@
 import numpy as np
 
 
+def _num_samples(x):
+    """From scikit-learn 0.19.1 utils.
+    Return number of samples in array-like x.
+    """
+    if hasattr(x, 'fit') and callable(x.fit):
+        # Don't get num_samples from an ensembles length!
+        raise TypeError('Expected sequence or array-like, got '
+                        'estimator %s' % x)
+    if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
+        if hasattr(x, '__array__'):
+            x = np.asarray(x)
+        else:
+            raise TypeError("Expected sequence or array-like, got %s" %
+                            type(x))
+    if hasattr(x, 'shape'):
+        if len(x.shape) == 0:
+            raise TypeError("Singleton array %r cannot be considered"
+                            " a valid collection." % x)
+        return x.shape[0]
+    else:
+        return len(x)
+
+
 def check_2d_array(X):
     """Check that X is array suitable for regression task
     and transforms it to 2d array, else raises ValueError.
@@ -13,9 +36,10 @@ def check_2d_array(X):
 
     Returns
     ----------
-    X_converted : transformed arra
+    X_converted : 2d array, shape = [n_samples, n_features]
+        The converted and validated X.
     """
-    X = np.array(X)
+    X = np.array(X, dtype=np.float64)
 
     if X.ndim == 1:
         X = X.reshape((-1, 1))
@@ -24,25 +48,29 @@ def check_2d_array(X):
     elif X.ndim == 0:
         raise ValueError("No dimensions")
     elif X.size == 0:
-        raise ValueError("No elements")
+        raise ValueError("Singleton array %r cannot be considered"
+                         " a valid collection." % X)
 
     return X
 
 
-def check_consistent_lengths(X, Y):
-    """Check that both arrays have the same number of samples.
+def check_consistent_length(*arrays):
+    """From scikit-learn 0.19.1 utils.
+    Check that all arrays have consistent first dimensions.
+
+    Checks whether all objects in arrays have the same shape or length.
 
     Parameters
     ----------
-    X : 1d or 2d array, shape = [n_samples] or [n_samples, n_features]
-        Training data.
-
-    Y : 1d or 2d array, shape = [n_samples] or [n_samples, n_features]
-        Target data.
-
-
+    *arrays : list or tuple of input objects.
+        Objects that will be checked for consistent length.
     """
-    pass
+
+    lengths = [_num_samples(X) for X in arrays if X is not None]
+    uniques = np.unique(lengths)
+    if len(uniques) > 1:
+        raise ValueError("Found input variables with inconsistent numbers of"
+                         " samples: %r" % [int(l) for l in lengths])
 
 
 def check_X_Y(X, Y):
@@ -61,23 +89,21 @@ def check_X_Y(X, Y):
 
     Returns
     ----------
-    X : array-like, shape = [n_samples, n_features]
-        Training vectors, where n_samples is the number of samples and
-        n_features is the number of predictors.
+    X_converted : 2d array, shape = [n_samples, n_features]
+        The converted and validated X.
 
-    Y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-        Target vectors, where n_samples is the number of samples and
-        n_targets is the number of response variables.
+    Y_converted : 2d array, shape = [n_samples, n_features]
+        The converted and validated Y.
     """
-    converted_X = check_2d_array(X)
-    converted_Y = check_2d_array(Y)
-    check_consistent_lengths(converted_X, converted_Y)
-    return converted_X, converted_Y
-
+    X = check_2d_array(X)
+    Y = check_2d_array(Y)
+    check_consistent_length(X, Y)
+    return X, Y
 
 
 def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance
+    """From scikit-learn 0.19.1 utils.
+    Turn seed into a np.random.RandomState instance
 
     Parameters
     ----------
@@ -93,23 +119,35 @@ def check_random_state(seed):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed
-    raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
-                     ' instance' % seed)
+    raise ValueError("%r cannot be used to seed a numpy.random.RandomState"
+                     " instance" % seed)
 
 
 def check_regression_answers(Y_true, Y_pred):
+    """Сheck that Y_true and Y_pred are 2d real-valued matrices
+    of the same shape [n_samples, n_outputs].
+
+    Parameters
+    ----------
+    Y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Ground truth (correct) target values.
+
+    Y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Estimated target values.
+
+    Returns
+    ----------
+    Y_true_converted : 2d array, shape = [n_samples, n_outputs]
+        The converted and validated Y_true.
+
+    Y_pred_converted : 2d array, shape = [n_samples, n_outputs]
+        The converted and validated Y_pred.
     """
-
-    :param Y_true:
-    :param Y_pred:
-    :return:
-    """
-    if Y_true.ndim == 1:
-        Y_true = Y_true.reshape((-1, 1))
-
-    if Y_pred.ndim == 1:
-        Y_pred = Y_pred.reshape((-1, 1))
-
+    Y_true = check_2d_array(Y_true)
+    Y_pred = check_2d_array(Y_pred)
+    if Y_true.shape != Y_pred.shape:
+        raise ValueError("Y_true and Y_pred have different shapes"
+                         " ({0}!={1})".format(Y_true.shape, Y_pred.shape))
     return Y_true, Y_pred
 
 
