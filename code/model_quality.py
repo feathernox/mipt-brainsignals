@@ -96,7 +96,7 @@ class ModelQuality():
         self.selector.fit(self.X_train, self.y_train)
         for (i, num) in enumerate(self.ns_features):
             cur_features = self.selector.select(num)
-            self.masks[i][cur_features] = True 
+            self.masks[i][cur_features] = True
             
     def _calc_mean_and_std(self):
         '''Calculates the mean and std of result'''
@@ -273,7 +273,7 @@ class ModelQuality():
         distribution of values for n_features = i and distribution of values for n_features = i + 1 assuming that both
         distributions are normal (parameters of the distribution are replaced by their estimates).
         '''
-        KL = self.calcualteKL(name)
+        KL = self.calculateKL(name)
         plt.plot(self.ns_features, KL, label='accumulated KL divergence')
         plt.ylabel('KL')
         
@@ -308,14 +308,3 @@ class ModelQuality():
             print("Min metric relative std", (cur_std/cur_mean).min(), "with n =", (cur_std/cur_mean).argmin())
             print("Max metric relative std", (cur_std/cur_mean).max(), "with n =", (cur_std/cur_mean).argmax())
             print()
-            
-        
-        
-        
-            
-
-
-# In[ ]:
-
-
-

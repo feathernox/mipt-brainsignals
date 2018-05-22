@@ -74,7 +74,7 @@ def check_consistent_length(*arrays):
 
 
 def check_X_Y(X, Y):
-    """Сheck that X and Y are real-valued matrices of shapes
+    """Check that X and Y are real-valued matrices of shapes
     [n_samples, n_features] and [n_samples, n_outputs].
 
     Parameters

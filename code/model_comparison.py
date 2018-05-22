@@ -106,6 +106,7 @@ class ModelComparison:
         for i in range(self.np):
             self.model_quality[i].evaluate(metrics, comparisons, characteristics, n_samples, 
                                                                      len_sample, mode, boot=self.boot)
+
     def _get_index_by_name(self, name):
         '''Returns the index corresponding to the name of a metric'''
         return self.names[name]
@@ -130,7 +131,8 @@ class ModelComparison:
                 value = self.model_quality[i].std[index] / self.model_quality[i].mean[index] 
             else:
                 raise ValueError("Got unexpected value %s " % what)
-            plt.plot(self.ns_features, value, label = str(self.pairs[i][0]) + ';' + str(self.pairs[i][1])[:10])
+            plt.plot(self.ns_features, value,
+                     label=str(self.pairs[i][0]) + ';' + str(self.pairs[i][1])[:10])
         
         plt.legend()
         plt.title(name)
